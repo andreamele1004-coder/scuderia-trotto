@@ -104,6 +104,10 @@ table.res tr.me{background:#2a2410}
 .energy{position:absolute;right:14px;bottom:calc(140px + env(safe-area-inset-bottom,0px));width:130px;background:rgba(0,0,0,.45);padding:6px 8px;border-radius:8px;font-family:var(--body);font-size:.72rem;font-weight:700}
 .energy .bar{height:8px;background:rgba(255,255,255,.2)}
 .energy .bar i{background:var(--good)}
+.mode{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,88vw);background:rgba(13,20,32,.92);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:8px;text-align:center;pointer-events:auto;font-family:var(--body)}
+.mode h3{font-family:var(--display);text-transform:uppercase;font-size:1.2rem}
+.mode .small{color:var(--muted);margin-bottom:6px}
+.hud .hint{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(0,0,0,.6);padding:8px 12px;border-radius:10px;font-family:var(--body);font-weight:700;font-size:.85rem;text-align:center;width:max-content;max-width:90vw}
 @media (prefers-reduced-motion:reduce){.hud .rec i{animation:none}}
 </style>
 </head><body>
@@ -192,12 +196,12 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function kmFmt(sec){ if(!isFinite(sec)) return '—'; const m=Math.floor(sec/60), s=sec-m*60; return `${m}'${s.toFixed(1).padStart(4,'0').replace('.','"')}`; }
 function trackPos(s,off){ // s lungo la corda (0..LAP), off = scostamento verso l'esterno in metri
   s=((s%LAP)+LAP)%LAP; const r=RAD+off, cl=Math.PI*RAD;
-  if(s<STRAIGHT) return {x:-STRAIGHT/2+s, z:-r, curve:false};
+  if(s<STRAIGHT) return {x:-STRAIGHT/2+s, z:r, curve:false};
   s-=STRAIGHT;
-  if(s<cl){const a=-Math.PI/2+s/RAD; return {x:STRAIGHT/2+r*Math.cos(a), z:r*Math.sin(a), curve:true};}
+  if(s<cl){const a=-Math.PI/2+s/RAD; return {x:STRAIGHT/2+r*Math.cos(a), z:-r*Math.sin(a), curve:true};}
   s-=cl;
-  if(s<STRAIGHT) return {x:STRAIGHT/2-s, z:r, curve:false};
-  s-=STRAIGHT; const a=Math.PI/2+s/RAD; return {x:-STRAIGHT/2+r*Math.cos(a), z:r*Math.sin(a), curve:true};
+  if(s<STRAIGHT) return {x:STRAIGHT/2-s, z:-r, curve:false};
+  s-=STRAIGHT; const a=Math.PI/2+s/RAD; return {x:-STRAIGHT/2+r*Math.cos(a), z:-r*Math.sin(a), curve:true};
 }
 const isCurve=s=>{s=((s%LAP)+LAP)%LAP; return (s>=STRAIGHT&&s<STRAIGHT+Math.PI*RAD)||(s>=2*STRAIGHT+Math.PI*RAD);};
 
@@ -209,7 +213,7 @@ class RaceSim{
       const row=startType==='auto'?(i<8?0:1):0, gate=startType==='auto'?(i<8?i:i-8+.5):i%8;
       return Object.assign({},f,{i,km,vc,vmax:vc*1.065,x:startType==='auto'?-row*7:-(f.hcp||0),lat:gate*LANE_W,lane:Math.round(gate),
         v:startType==='auto'?vc*.8:0,E:100,brk:0,breaks:0,dq:false,fin:null,noise:rnd(-.004,.004),
-        tac:f.tac||['avanti','coperto','finale'][Math.floor(Math.random()*3)],push:false,save:false,want:0,phase:0});
+        tac:f.tac||['avanti','coperto','finale'][Math.floor(Math.random()*3)],push:false,save:false,want:0,phase:0,manual:false,hold:false,drive:.45,strain:0});
     });
     this.order=this.h.slice();
   }
@@ -233,26 +237,34 @@ class RaceSim{
       else if(togo>(h.tac==='finale'?650:520)) tgt*= h.tac==='avanti'?1.0:h.tac==='coperto'?.996:.99;
       else tgt=Math.min(h.vmax, h.vc*(.962+.19*(h.E/100))+(h.tac==='finale'?.12:0));
       // il gruppo segue il ritmo del battistrada: chi è più debole lo paga in energia
-      if(p>=.15&&togo>520&&sorted.length){ const L=sorted[0]; if(L!==h) tgt=Math.max(tgt,Math.min(h.vmax,L.v*(h.tac==='finale'?.992:.998))); }
+      if(h.manual){ // guida tu: la spinta decide la velocità
+        const base=h.save?.15:.45; h.drive+=h.hold?Math.min(.6*dt,1-h.drive):clamp(base-h.drive,-.22*dt,.22*dt);
+        tgt=h.vc*(.95+.11*h.drive)*(p<.15?1+(h.stt-50)/900:1);
+        if(togo<=520) tgt=Math.min(tgt*1.0, h.vc*(.962+.19*(h.E/100))+(h.drive>.8?.5:0));
+        if(!h.hold&&p>=.15&&togo>520&&sorted.length&&sorted[0]!==h) tgt=Math.max(tgt,Math.min(h.vmax,sorted[0].v*.997));
+        h.strain=clamp(h.strain+(h.hold&&h.drive>.8?(h.drive-.7)*.4*dt:-.3*dt),0,1);
+      }
+      else if(p>=.15&&togo>520&&sorted.length){ const L=sorted[0]; if(L!==h) tgt=Math.max(tgt,Math.min(h.vmax,L.v*(h.tac==='finale'?.992:.998))); }
       if(h.E<18) tgt*=.88+h.E/150;
       // partenza: chi è all'esterno o spinge per andare in testa o si ritira per mettersi in coda alla fila interna
       if(p<.22&&h.lane>0){ const blk=sorted.some(o=>o!==h&&Math.abs(o.x-h.x)<4.2&&Math.abs(o.lat-(h.lane-1)*LANE_W)<1.2);
         if(blk) tgt*= h.tac==='avanti'?1.03:.965; }
-      if(h.push) tgt*=1.035; if(h.save) tgt*=.97;
+      if(!h.manual){ if(h.push) tgt*=1.035; if(h.save) tgt*=.97; }
       if(this.start==='nastri'&&h.x<60) tgt=Math.min(tgt,h.v+2.6*dt*30);
       // traffico: chi è davanti nella stessa corsia
       const ahead=sorted.filter(o=>o!==h&&o.x>h.x&&o.x-h.x<3.2&&Math.abs(o.lat-h.lat)<1.1)[0];
       const covered=sorted.some(o=>o!==h&&o.x>h.x&&o.x-h.x<6&&Math.abs(o.lat-h.lat)<1.1);
       const freeLane=(lat)=>!sorted.some(o=>o!==h&&Math.abs(o.x-h.x)<4.2&&Math.abs(o.lat-lat)<1.2);
       if(ahead&&tgt>ahead.v*1.002){
-        const wantOut = h.isMe&&h.want ? h.want>0 : (togo<650||(h.tac==='avanti'&&p>.25)||Math.random()<.003);
-        if(wantOut&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; if(h.isMe) h.want=0;}
+        const wantOut = h.manual ? h.want>0 : h.isMe&&h.want ? h.want>0 : (togo<650||(h.tac==='avanti'&&p>.25)||Math.random()<.003);
+        if(wantOut&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; if(h.isMe){h.want=0; h.keepOut=8;}}
         else tgt=Math.min(tgt,ahead.v);
       }
-      if(h.isMe&&h.want>0&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; h.want=0;}
+      if(h.isMe&&h.want>0&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; h.want=0; h.keepOut=8;}
+      if(h.keepOut>0) h.keepOut-=dt;
       const pref=(p<.18||togo<650)?0:(h.tac==='coperto'?1:0);
       if(h.lane>0&&freeLane((h.lane-1)*LANE_W)){
-        const wantIn = h.isMe&&h.want ? h.want<0 : (h.lane>pref&&(p<.3||!ahead&&togo>450));
+        const wantIn = h.manual ? (h.want<0||(h.want===0&&!(h.keepOut>0)&&(!ahead||p<.3))) : h.isMe&&h.want ? h.want<0 : (h.lane>pref&&(p<.3||!ahead&&togo>450));
         if(wantIn&&(h.isMe&&h.want||Math.random()<.35)){h.lane--; if(h.isMe) h.want=0;}
       }
       if(h.isMe&&h.want<0&&h.lane===0) h.want=0;
@@ -260,14 +272,14 @@ class RaceSim{
       // rottura (galoppo)
       if(h.brk>0){ h.brk-=dt; tgt=h.vc*.72; }
       else {
-        let hz=.00028*(1+(100-h.reg)/22)*(h.push?5:1)*(p<.08?2.4:1)*(h.drv<60?1.3:1)*(1+(100-(h.tmp||60))/150);
-        if(Math.random()<hz*dt){ h.brk=2.6; h.breaks++; if(h.lane<4) h.lane++;
+        let hz=.00028*(1+(100-h.reg)/22)*(h.manual?1+Math.pow(h.strain,3)*22:h.push?5:1)*(p<.08?2.4:1)*(h.drv<60?1.3:1)*(1+(100-(h.tmp||60))/150);
+        if(Math.random()<hz*dt){ h.brk=2.6; h.breaks++; h.strain=0; h.drive=.3; if(h.lane<4) h.lane++;
           if(h.breaks>=2||togo<150) h.dq=true; }
       }
       const acc=tgt>h.v?(this.start==='nastri'&&h.x<80?2.6:1.2):2.2;
       h.v+=clamp(tgt-h.v,-acc*dt,acc*dt);
       // energia
-      let drain=Math.pow(h.v/h.vc,3)*(86/(D/h.vc))*(1.25-h.sta/200)*(h.lat>.8&&!covered?1+.12*h.lane:covered?.78:1.14)*(h.push?1.7:1)*(h.save?.7:1);
+      let drain=Math.pow(h.v/h.vc,3)*(86/(D/h.vc))*(1.25-h.sta/200)*(h.lat>.8&&!covered?1+.12*h.lane:covered?.78:1.14)*(h.manual?1+Math.max(0,h.drive-.6)*.5:(h.push?1.7:1)*(h.save?.7:1));
       h.E=Math.max(0,h.E-drain*dt);
       let dx=h.v*dt; const s=this.trackS(h.x); if(isCurve(s)) dx*=RAD/(RAD+h.lat);
       h.x+=dx;
@@ -798,8 +810,8 @@ function buildWorld(scene){
   // tribuna sul rettilineo d'arrivo
   const crowd=canvasTex(512,128,(g,w,h)=>{g.fillStyle='#3a3f4a';g.fillRect(0,0,w,h);for(let i=0;i<5000;i++){g.fillStyle=`hsl(${Math.random()*360},${30+Math.random()*40}%,${35+Math.random()*40}%)`;g.fillRect(Math.random()*w,Math.random()*h,2,3);}});
   const stand=new THREE.Mesh(new THREE.BoxGeometry(220,16,20),[M2('#59606e'),M2('#59606e'),M2('#4a505c'),M2('#4a505c'),new THREE.MeshStandardMaterial({map:crowd}),M2('#59606e')]);
-  stand.position.set(0,8,-(RAD+21+22)); stand.rotation.y=Math.PI; scene.add(stand);
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(226,1,26),M2('#d9dde3')); roof.position.set(0,17,-(RAD+21+20)); scene.add(roof);
+  stand.position.set(0,8,RAD+21+22); stand.rotation.y=0; scene.add(stand);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(226,1,26),M2('#d9dde3')); roof.position.set(0,17,RAD+21+20); scene.add(roof);
   // palo d'arrivo e linea
   const fp=trackPos(FINISH_S,-3.2); const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,8),M2('#ffffff')); pole.position.set(fp.x,3.5,fp.z); scene.add(pole);
   const disc=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,24),M2('#d32f2f')); disc.rotation.x=Math.PI/2; disc.position.set(fp.x,6.6,fp.z); scene.add(disc);
@@ -830,10 +842,10 @@ function watchRace(sim,run,onDone){
   if(!window.THREE){ toast('Visuale 3D non disponibile su questo dispositivo: mostro il risultato.'); onDone(sim.runToEnd()); return; }
   const view=$('#raceView'); view.innerHTML=`<div class="hud"><div class="rec"><i></i>REC <span id="hClock">00:00</span></div>
    <div class="meta"><span id="hPos">—</span><b id="hTogo">—</b><span id="hKm"></span></div><div class="order" id="hOrder"></div><div class="msg" id="hMsg"></div>
-   <div class="energy"><div>Energia</div><div class="bar"><i id="hE" style="width:100%"></i></div></div></div><div class="vignette"></div>
+   <div class="energy"><div>Energia</div><div class="bar"><i id="hE" style="width:100%"></i></div><div id="gaitBox" hidden style="margin-top:6px"><div>Andatura</div><div class="bar"><i id="hG" style="width:0"></i></div></div></div><div class="hint" id="hHint" hidden>Tieni premuto per spingere · rilascia per tenere<br>Scorri ← verso la corda · → per uscire</div></div><div class="mode" id="modeBox"><h3>Come vuoi correre?</h3><button class="btn" id="mDrive">Guida tu</button><div class="small">Tieni premuto per spingere, scorri per cambiare corsia, attento all'andatura.</div><button class="btn ghost" id="mOrders">Ordini al driver</button><div class="small">Il driver guida, tu dai gli ordini con i pulsanti.</div></div><div class="vignette"></div>
    <div class="ctrl"><button id="cPush" class="push" aria-pressed="false">Spingi</button><button id="cSave" aria-pressed="false">Risparmia</button><button id="cOut">Esci ↗</button><button id="cIn">Rientra ↙</button>
    <button id="cCam">Visuale</button><button id="cSpd">×1</button><button id="cSkip">Fine</button></div>`;
-  view.classList.add('on'); document.body.style.overflow='hidden';
+  view.classList.add('on'); document.body.style.overflow='hidden'; let paused=true;
   let renderer;
   try{ renderer=new THREE.WebGLRenderer({antialias:true}); }catch(e){ view.classList.remove('on'); document.body.style.overflow=''; toast('Visuale 3D non disponibile: mostro il risultato.'); onDone(sim.runToEnd()); return; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(window.innerWidth,window.innerHeight);
@@ -843,16 +855,25 @@ function watchRace(sim,run,onDone){
   const fovFor=a=>clamp(2*Math.atan(Math.tan(54*Math.PI/180)/a)*180/Math.PI,62,112); cam.fov=fovFor(cam.aspect); cam.updateProjectionMatrix();
   const rigs=sim.h.map((h,i)=>{const r=makeRig(h.colors,h.coat||'#5b3a1e',i+1,h.isMe); scene.add(r.root); return r;});
   const meI=sim.h.findIndex(h=>h.isMe), me=sim.h[meI], myRig=rigs[meI];
-  myRig.root.add(cam); cam.position.set(0,2.32,-2.05); cam.rotation.set(-.26,Math.PI,0);
+  myRig.root.add(cam); cam.position.set(0,2.32,-2.05); const pitchFor=a=>a>1?.17:.1; cam.rotation.set(pitchFor(cam.aspect),Math.PI,0);
   const gate=sim.start==='auto'?makeGateCar():null; if(gate) scene.add(gate);
   let gateX=0, gateV=0, gateOff=0, speed=1, camMode='gopro', last=performance.now(), endT=null, hudT=0, raf;
   const tvCam=new THREE.PerspectiveCamera(42,window.innerWidth/window.innerHeight,.1,3000);
   const msg=t=>{$('#hMsg').textContent=t;};
   msg(sim.start==='auto'?'Dietro la macchina…':'Pronti ai nastri…');
-  const onResize=()=>{renderer.setSize(window.innerWidth,window.innerHeight); cam.aspect=tvCam.aspect=window.innerWidth/window.innerHeight; cam.fov=fovFor(cam.aspect); cam.updateProjectionMatrix(); tvCam.updateProjectionMatrix();};
+  const onResize=()=>{renderer.setSize(window.innerWidth,window.innerHeight); cam.aspect=tvCam.aspect=window.innerWidth/window.innerHeight; cam.fov=fovFor(cam.aspect); cam.rotation.x=pitchFor(cam.aspect); cam.updateProjectionMatrix(); tvCam.updateProjectionMatrix();};
   window.addEventListener('resize',onResize);
   const tog=(id,k)=>{const b=$(id); b.onclick=()=>{me[k]=!me[k]; if(k==='push'&&me.push){me.save=false;$('#cSave').setAttribute('aria-pressed','false');} if(k==='save'&&me.save){me.push=false;$('#cPush').setAttribute('aria-pressed','false');} b.setAttribute('aria-pressed',me[k]);};};
   tog('#cPush','push'); tog('#cSave','save');
+  const setMode=manual=>{me.manual=manual; paused=false; $('#modeBox').remove();
+    $('#cPush').hidden=manual; $('#gaitBox').hidden=!manual;
+    if(manual){ $('#hHint').hidden=false; setTimeout(()=>{const h=$('#hHint'); if(h) h.hidden=true;},6000); }};
+  $('#mDrive').onclick=()=>setMode(true); $('#mOrders').onclick=()=>setMode(false);
+  // tocco sullo schermo: tieni premuto = spingi, scorri = cambia corsia
+  let tx=null, ty=null, swiped=false; const cv=renderer.domElement; cv.style.touchAction='none';
+  cv.addEventListener('pointerdown',e=>{ if(!me.manual) return; tx=e.clientX; ty=e.clientY; swiped=false; me.hold=true; });
+  cv.addEventListener('pointermove',e=>{ if(!me.manual||tx==null||swiped) return; const dx=e.clientX-tx; if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(e.clientY-ty)){ me.want=dx<0?-1:1; swiped=true; me.hold=false; } });
+  const up=()=>{ me.hold=false; tx=null; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up); cv.addEventListener('pointerleave',up);
   $('#cOut').onclick=()=>{me.want=1}; $('#cIn').onclick=()=>{me.want=-1};
   $('#cSpd').onclick=e=>{speed=speed===1?2:speed===2?4:1; e.target.textContent='×'+speed;};
   $('#cCam').onclick=()=>{camMode=camMode==='gopro'?'tv':'gopro';};
@@ -864,7 +885,7 @@ function watchRace(sim,run,onDone){
   let started=false;
   function frame(now){
     const dt=Math.min(.05,(now-last)/1000); last=now;
-    let rem=dt*speed; while(rem>0){const st=Math.min(.05,rem); sim.step(st); rem-=st;}
+    let rem=paused?0:dt*speed; while(rem>0){const st=Math.min(.05,rem); sim.step(st); rem-=st;}
     if(sim.go&&!started){started=true; msg('Via!'); setTimeout(()=>{if(!finished&&!sim.done) msg('')},1200);}
     // macchina dell'autostart
     if(gate){ if(!sim.go){gateX=Math.max(...sim.h.map(h=>h.x))+3.5; gateV=sim.h[0].v;} else {gateV+=7*dt*speed; gateX+=gateV*dt*speed; gateOff=Math.min(30,gateOff+6*dt*speed);}
@@ -883,10 +904,12 @@ function watchRace(sim,run,onDone){
       $('#hPos').textContent=me.dq?'SQUALIFICATO':`${mp}° di ${ord.length}`;
       $('#hTogo').textContent=me.fin!=null?'ARRIVATO':(sim.go?`${togo} m`:'—');
       $('#hKm').textContent=sim.go&&me.x>100?`media ${kmFmt(sim.t/(me.x/1000))}/km · ${me.lane===0?'alla corda':me.lane+'ª ruota'}`:'';
+      if(me.manual){ const g=$('#hG'); g.style.width=Math.round(me.strain*100)+'%'; g.style.background=me.strain>.7?'var(--bad)':me.strain>.4?'var(--warn)':'var(--good)';
+        if(me.strain>.75&&me.brk<=0){ msg('Al limite! Rilascia'); try{navigator.vibrate&&navigator.vibrate(40)}catch(e){} } else if($('#hMsg').textContent.startsWith('Al limite')) msg(''); }
       $('#hE').style.width=me.E+'%'; $('#hE').style.background=me.E<25?'var(--bad)':me.E<50?'var(--warn)':'var(--good)';
       const top=ord.slice(0,6); if(!top.includes(me)) top.push(me);
       $('#hOrder').innerHTML=top.map(h=>`<div class="${h.isMe?'me':''}"><span class="c" style="background:${h.colors.a}"></span>${ord.indexOf(h)+1}. ${esc(h.name)}${h.brk>0?' ⚠':''}</div>`).join('');
-      if(me.brk>0&&!me.dq) msg('Rottura! Al galoppo'); else if(me.dq&&!endT) msg('Squalificato'); else if(started&&sim.go&&$('#hMsg').textContent.startsWith('Rottura')) msg('');
+      if(me.brk>0&&!me.dq){ msg('Rottura! Al galoppo'); try{navigator.vibrate&&navigator.vibrate([80,60,80])}catch(e){} } else if(me.dq&&!endT) msg('Squalificato'); else if(started&&sim.go&&$('#hMsg').textContent.startsWith('Rottura')) msg('');
     }
     if((sim.done||me.fin!=null&&sim.h.filter(h=>h.fin!=null).length>=Math.min(3,sim.h.length))&&!endT){ endT=now; const p=sim.order.indexOf(me)+1; msg(me.dq?'Squalificato':`Arrivo: ${p}°`); }
     if(endT&&now-endT>2600){ sim.runToEnd(); finish(); return; }

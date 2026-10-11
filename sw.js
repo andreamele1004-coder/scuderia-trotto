@@ -1,7 +1,7 @@
 // Service worker: rende il gioco disponibile offline.
 // Quando modifichi index.html, aumenta il numero di versione qui sotto
 // così il telefono scarica la versione nuova.
-const CACHE = 'trotto-v1';
+const CACHE = 'trotto-v2';
 const FILES = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'];
 
 self.addEventListener('install', e => {
