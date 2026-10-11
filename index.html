@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1420"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Trotto"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Scuderia Trotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: app mobile a schermo intero, intestazione con scuderia e cassa, contenuto a schede, barra di navigazione in basso. Visuale corsa a tutto schermo sopra. */
+:root{
+  --bg:#0d1420; --panel:#151f2e; --panel2:#1c2a3d; --line:#2a3b53; --ink:#eef2f7; --muted:#93a3b8;
+  --sand:#d9b47a; --accent:#f2c14e; --grass:#3f8f4f; --good:#57c27a; --warn:#f0a43a; --bad:#ef6a5b;
+  --display:"Oswald","Arial Narrow",Arial,sans-serif; --body:"Nunito Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.02em;margin:0;text-wrap:balance}
+h2{font-size:1.35rem;text-transform:uppercase}
+h3{font-size:1.05rem}
+.app{max-width:760px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(180deg,#0d1420 70%,rgba(13,20,32,.85));padding:12px 16px 10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+header.top .silk{width:40px;height:40px;flex:none}
+header.top .who{flex:1;min-width:0}
+header.top .who b{display:block;font-family:var(--display);font-size:1.15rem;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top .who small{color:var(--muted)}
+.cash{font-family:var(--display);font-size:1.15rem;color:var(--accent);font-variant-numeric:tabular-nums;text-align:right}
+.cash small{display:block;font-family:var(--body);font-size:.75rem;color:var(--muted)}
+main{flex:1;padding:16px 16px 96px;display:grid;gap:16px;align-content:start}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#0a111b;border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{display:flex;width:100%;max-width:760px}
+nav.tabs button{flex:1;background:none;border:0;padding:8px 2px 10px;font-size:.72rem;color:var(--muted);display:grid;justify-items:center;gap:2px;cursor:pointer}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row>*{min-width:0}
+.grow{flex:1}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.btn{background:var(--accent);color:#1c1405;border:0;border-radius:9px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:.95rem}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.small{padding:6px 10px;font-size:.85rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],select,input[type=number]{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+label.f{display:grid;gap:5px;font-weight:700;font-size:.9rem}
+.pill{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.pill.g1{background:#3a2c08;color:var(--accent);border-color:#6b5414}
+.pill.ok{color:var(--good);border-color:#2d5a3b}
+.pill.no{color:var(--bad);border-color:#5a2d2d}
+.stat{display:grid;grid-template-columns:88px 1fr 34px;align-items:center;gap:8px;font-size:.85rem}
+.bar{height:6px;border-radius:3px;background:#24344a;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sand)}
+.stat b{font-variant-numeric:tabular-nums;text-align:right}
+.horse{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:start}
+.horse .ico{width:44px;height:44px;border-radius:10px;background:var(--panel2);display:grid;place-items:center;font-family:var(--display);font-size:1.2rem;color:var(--sand)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.kv div{background:var(--panel2);border-radius:8px;padding:8px}
+.kv small{display:block;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+.kv b{font-family:var(--display);font-size:1.1rem;font-variant-numeric:tabular-nums}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.85rem;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#1c1405;border-color:var(--accent);font-weight:800}
+.race{border-left:4px solid var(--line)}
+.race.big{border-left-color:var(--accent)}
+.rules{font-size:.85rem;color:var(--muted);display:grid;gap:4px}
+.rules a{color:var(--sand)}
+details summary{cursor:pointer;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:#223349;border:1px solid var(--line);padding:10px 14px;border-radius:10px;z-index:20;max-width:90vw;font-size:.9rem}
+.colors{display:flex;flex-wrap:wrap;gap:6px}
+.colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.colors button[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.hero{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.news{display:grid;gap:6px;font-size:.88rem}
+.news div{padding-left:10px;border-left:2px solid var(--line)}
+table.res{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+table.res td,table.res th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:left}
+table.res tr.me{background:#2a2410}
+.tblwrap{overflow-x:auto}
+/* Corsa */
+#raceView{position:fixed;inset:0;z-index:30;background:#000;display:none}
+#raceView.on{display:block}
+#raceView canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;inset:0;pointer-events:none;font-family:var(--display);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.hud .rec{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;font-size:.95rem;letter-spacing:.06em;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:8px}
+.hud .rec i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff3b30;margin-right:6px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.hud .meta{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;text-align:right;font-size:.9rem;line-height:1.25;background:rgba(0,0,0,.45);padding:6px 10px;border-radius:8px}
+.hud .meta b{font-size:1.6rem;display:block}
+.hud .order{position:absolute;left:10px;top:calc(56px + env(safe-area-inset-top,0px));display:grid;gap:3px;font-family:var(--body);font-size:.75rem;font-weight:700}
+.hud .order div{display:flex;gap:6px;align-items:center;background:rgba(0,0,0,.45);padding:2px 8px 2px 4px;border-radius:6px}
+.hud .order div.me{background:rgba(242,193,78,.85);color:#1c1405;text-shadow:none}
+.hud .order span.c{width:12px;height:12px;border-radius:3px;display:inline-block}
+.hud .msg{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);font-size:1.7rem;text-transform:uppercase;text-align:center;width:90%}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%)}
+.ctrl{position:absolute;left:0;right:0;bottom:0;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;pointer-events:auto;background:linear-gradient(0deg,rgba(0,0,0,.6),rgba(0,0,0,0))}
+.ctrl button{background:rgba(20,30,45,.85);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:10px 12px;font-weight:800;font-size:.85rem;cursor:pointer;min-width:64px}
+.ctrl button.push{background:#c8432f;border-color:#ff8a7a}
+.ctrl button[aria-pressed="true"]{background:var(--accent);color:#1c1405}
+.energy{position:absolute;right:14px;bottom:calc(140px + env(safe-area-inset-bottom,0px));width:130px;background:rgba(0,0,0,.45);padding:6px 8px;border-radius:8px;font-family:var(--body);font-size:.72rem;font-weight:700}
+.energy .bar{height:8px;background:rgba(255,255,255,.2)}
+.energy .bar i{background:var(--good)}
+@media (prefers-reduced-motion:reduce){.hud .rec i{animation:none}}
+</style>
+</head><body>
+<div id="app"></div>
+<div id="raceView" aria-label="Visuale della corsa"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ===== Dati di riferimento ===== */
+const TRACKS={
+  milano:{n:'Milano San Siro',lap:1000},roma:{n:'Roma Capannelle',lap:1000},napoli:{n:'Napoli Agnano',lap:1000},
+  torino:{n:'Torino Vinovo',lap:1000},firenze:{n:'Firenze Le Mulina',lap:1000},montecatini:{n:'Montecatini Sesana',lap:800},
+  bologna:{n:'Bologna Arcoveggio',lap:1000},padova:{n:'Padova Le Padovanelle',lap:1000},treviso:{n:'Treviso Sant\'Artemio',lap:1000},
+  modena:{n:'Modena',lap:800},cesena:{n:'Cesena',lap:800},follonica:{n:'Follonica',lap:800},
+  vincennes:{n:'Parigi Vincennes',lap:2000},solvalla:{n:'Stoccolma Solvalla',lap:1000},aby:{n:'Göteborg Åby',lap:1000},
+  meadowlands:{n:'Meadowlands (USA)',lap:1609}
+};
+const NAT_TRACKS=['milano','roma','napoli','torino','firenze','montecatini','bologna','padova','treviso','modena','cesena','follonica'];
+
+/* Grandi corse: regole riassunte dalle fonti indicate. Dove la fonte non dice qualcosa, il gioco usa una semplificazione segnalata con "nel gioco". */
+const BIG=[
+ {id:'strade1',n:'Strade per le Classiche · Treviso',week:7,track:'treviso',dist:2060,start:'auto',purse:20900,group:'Circuito ANACT',
+  age:[3,3],maxEarn:15000,format:'single',level:58,fee:0,
+  rules:['Puledri di 3 anni, maschi e femmine in prove separate, iscritti al programma ANACT Stakes Plus+.','Somme vinte in carriera inferiori a 15.000 €.','Prova unica su media distanza, partenza con autostart; da 4 a 14 partenti.','Montepremi 20.900 € per corsa. Iscrizione e dichiarazione dei partenti gratuite.'],
+  src:[['Disciplinare ANACT 2025','https://www.anact.it/wp-content/uploads/2025/01/Disciplinare_Strade_per_le_Classiche__RevTP.pdf']]},
+ {id:'strade2',n:'Strade per le Classiche · Roma',week:9,track:'roma',dist:2060,start:'auto',purse:20900,group:'Circuito ANACT',age:[3,3],maxEarn:15000,format:'single',level:58,fee:0,ref:'strade1'},
+ {id:'strade3',n:'Strade per le Classiche · Torino',week:14,track:'torino',dist:2060,start:'auto',purse:20900,group:'Circuito ANACT',age:[3,3],maxEarn:15000,format:'single',level:59,fee:0,ref:'strade1'},
+ {id:'strade4',n:'Strade per le Classiche · Napoli',week:18,track:'napoli',dist:2060,start:'auto',purse:20900,group:'Circuito ANACT',age:[3,3],maxEarn:15000,format:'single',level:59,fee:0,ref:'strade1'},
+ {id:'strade5',n:'Strade per le Classiche · Modena',week:26,track:'modena',dist:2060,start:'auto',purse:20900,group:'Circuito ANACT',age:[3,3],maxEarn:15000,format:'single',level:60,fee:0,ref:'strade1'},
+ {id:'lotteria',n:'Gran Premio Lotteria',week:18,track:'napoli',dist:1600,start:'auto',purse:600000,group:'Gruppo I · UET Elite',
+  age:[4,99],format:'heats',heats:3,qualPerHeat:3,level:86,fee:3000,
+  rules:['Cavalli di 4 anni e oltre, internazionale.','1.600 metri con partenza autostart sulla pista di Agnano da 1.000 m.','Tre batterie eliminatorie: i primi tre di ognuna vanno in finale, corsa lo stesso giorno. Per i non qualificati c\'è una consolazione.','Tappa dell\'UET Elite Circuit. Nel gioco: montepremi indicativo e quota di iscrizione simbolica di 3.000 €.'],
+  src:[['Gran Premio Lotteria (Wikipedia)','https://en.wikipedia.org/wiki/Gran_Premio_Lotteria'],['UET Elite Circuit 2026','https://www.uet-trot.eu/content/uploads/2026/05/2026_05_04_UET_ELITE_CIRCUIT_ranking.pdf']]},
+ {id:'derby',n:'Derby Italiano del Trotto',week:41,track:'roma',dist:2100,start:'auto',purse:500000,group:'Gruppo I',
+  age:[3,3],native:true,format:'heats',heats:3,qualPerHeat:4,extra:2,level:76,fee:2500,
+  rules:['Puledri indigeni (nati in Italia) di 3 anni.','2.100 metri con partenza autostart all\'Ippodromo Capannelle di Roma, a ottobre.','Tre batterie di qualificazione più ripescaggio, finale a 14 cavalli.','Nel gioco: in finale i primi 4 di ogni batteria più i 2 migliori quinti; montepremi e quota di iscrizione indicativi.'],
+  src:[['Cavallo Magazine · Il Derby Italiano del Trotto','https://cavallomagazine.it/ippica/il-derby-italiano-del-trotto']]},
+ {id:'mangelli',n:'Gran Premio Orsi Mangelli',week:44,track:'milano',dist:1600,start:'auto',purse:300000,group:'Gruppo I',
+  age:[3,3],format:'heats',heats:2,qualPerHeat:5,level:75,fee:2000,
+  rules:['Cavalli di 3 anni, maschi e femmine, italiani ed esteri, all\'Ippodromo Snai San Siro di Milano a inizio novembre.','Le femmine hanno anche la versione "Filly" (Gruppo II, 1.600 m).','Nel gioco: 1.600 m autostart con due batterie e finale; montepremi indicativo.'],
+  src:[['Comunicato Ippodromo Snai San Siro 2025','https://adhoccommunication.it/wp-content/uploads/2025/10/IPPODROMO-SNAI-SAN-SIRO_GRAN-PREMIO-PAOLO-E-ORSINO-ORSI-MANGELLI_27.10.25.pdf']]},
+ {id:'nazioni',n:'Gran Premio delle Nazioni',week:44,track:'milano',dist:2100,start:'auto',purse:220000,group:'Gruppo I · UET Elite',
+  age:[4,99],format:'single',level:84,fee:2000,
+  rules:['Cavalli di 4 anni e oltre, internazionale.','2.100 metri sulla nuova pista di San Siro.','Montepremi 220.000 € (edizione 2024).','Nel gioco: partenza autostart e quota di iscrizione simbolica.'],
+  src:[['Cavallo Magazine · GP delle Nazioni','https://cavallomagazine.it/ippica/il-grande-trotto-a-milano-con-il-gp-delle-nazioni']]},
+ {id:'amerique_q1',n:'Prix de Bretagne (qualif. Amérique)',week:46,track:'vincennes',dist:2700,start:'auto',purse:120000,group:'Gruppo II · Amérique Races',
+  age:[4,10],noGelding:true,minEarn:160000,format:'single',level:83,fee:1500,qualifies:'amerique',
+  rules:['Prima delle prove "4B" del circuito Prix d\'Amérique Races: Bretagne, Bourbonnais, Bourgogne, Belgique.','Cavalli dai 4 ai 10 anni, esclusi i castroni, con almeno 160.000 € di somme vinte.','2.700 metri sulla grande pista di Vincennes.','I primi tre si qualificano direttamente per il Prix d\'Amérique.','Nel gioco: partenza autostart, montepremi e quota indicativi.'],
+  src:[['Turf-FR · Prix d\'Amérique Races','https://www.turf-fr.com/blog/?p=1952']]},
+ {id:'amerique_q2',n:'Prix du Bourbonnais (qualif. Amérique)',week:50,track:'vincennes',dist:2700,start:'auto',purse:120000,group:'Gruppo II · Amérique Races',age:[4,10],noGelding:true,minEarn:160000,format:'single',level:84,fee:1500,qualifies:'amerique',ref:'amerique_q1'},
+ {id:'amerique_q3',n:'Prix de Bourgogne (qualif. Amérique)',week:1,track:'vincennes',dist:2700,start:'auto',purse:120000,group:'Gruppo II · Amérique Races',age:[4,10],noGelding:true,minEarn:160000,format:'single',level:85,fee:1500,qualifies:'amerique',ref:'amerique_q1'},
+ {id:'amerique_q4',n:'Prix de Belgique (qualif. Amérique)',week:2,track:'vincennes',dist:2700,start:'auto',purse:120000,group:'Gruppo II · Amérique Races',age:[4,10],noGelding:true,minEarn:160000,format:'single',level:85,fee:1500,qualifies:'amerique',ref:'amerique_q1'},
+ {id:'amerique',n:'Prix d\'Amérique Legend Race',week:4,track:'vincennes',dist:2700,start:'auto',purse:1000000,group:'Gruppo I',
+  age:[4,10],noGelding:true,minEarn:160000,needQual:'amerique',format:'single',level:92,fee:5000,
+  rules:['Si corre l\'ultima domenica di gennaio a Vincennes, 2.700 metri.','Cavalli dai 4 ai 10 anni, esclusi i castroni, con almeno 160.000 € di somme vinte.','Qualificati di diritto i primi tre delle quattro prove "4B"; i posti rimanenti, fino a un massimo di 18 partenti, nel gioco vanno ai cavalli con più somme vinte.','Nel gioco: partenza autostart, montepremi indicativo.'],
+  src:[['Turf-FR · Prix d\'Amérique Races','https://www.turf-fr.com/blog/?p=1952']]},
+ {id:'erace1',n:'C Th Ericssons Memorial (E-race)',week:13,track:'solvalla',dist:1640,start:'auto',purse:200000,group:'E-race · Elitloppet',age:[4,99],format:'single',level:80,fee:800,epoints:true,
+  rules:['Una delle sette "E-race" che assegnano punti per l\'Elitloppet: 15-8-6-3-2-1 ai primi sei.','I primi due della classifica a punti ricevono il "biglietto rosa" per l\'Elitloppet; a parità contano il numero di corse e poi il sorteggio.','Nel gioco: cavalli di 4 anni e oltre, distanza e montepremi indicativi (in corone svedesi nella realtà).'],
+  src:[['Elitloppet · More routes to the Elite Race','https://www.elitloppet.se/en/?p=5359']]},
+ {id:'erace2',n:'The Onions Lopp (E-race)',week:15,track:'solvalla',dist:1640,start:'auto',purse:200000,group:'E-race · Elitloppet',age:[4,99],format:'single',level:80,fee:800,epoints:true,ref:'erace1'},
+ {id:'erace3',n:'Nuncios Lopp (E-race)',week:17,track:'solvalla',dist:1640,start:'auto',purse:200000,group:'E-race · Elitloppet',age:[4,99],format:'single',level:81,fee:800,epoints:true,ref:'erace1'},
+ {id:'erace4',n:'Paralympiatravet (E-race)',week:19,track:'aby',dist:2140,start:'auto',purse:250000,group:'E-race · Elitloppet',age:[4,99],format:'single',level:82,fee:800,epoints:true,ref:'erace1'},
+ {id:'erace5',n:'Meadow Roads Lopp (E-race)',week:20,track:'solvalla',dist:1640,start:'auto',purse:200000,group:'E-race · Elitloppet',age:[4,99],format:'single',level:81,fee:800,epoints:true,ref:'erace1'},
+ {id:'elitloppet',n:'Elitloppet',week:22,track:'solvalla',dist:1609,start:'auto',purse:900000,group:'Gruppo I · invito',
+  age:[4,99],needQual:'elit',format:'heats',heats:2,qualPerHeat:4,level:91,fee:0,
+  rules:['Si corre a Solvalla (Stoccolma) l\'ultima domenica di maggio, sul miglio: 1.609 metri.','16 cavalli in due batterie di qualificazione, 8 in finale lo stesso giorno.','Si entra solo su invito: 2 posti ai primi della classifica E-race, 1 al vincitore della Finlandia Ajo, gli altri 13 invitati da Solvalla.','Nel gioco l\'invito di Solvalla arriva ai cavalli con valutazione molto alta o oltre 500.000 € di somme vinte. Al vincitore 5 milioni di corone nella realtà; qui montepremi indicativo in euro.'],
+  src:[['Elitloppet · About','https://www.elitloppet.se/en/?p=213'],['Elitloppet · More routes to the Elite Race','https://www.elitloppet.se/en/?p=5359']]},
+ {id:'hambo',n:'Hambletonian',week:31,track:'meadowlands',dist:1609,start:'auto',purse:1100000,group:'Gruppo I · USA',
+  age:[3,3],needPay:'hambo',format:'heats',heats:2,qualPerHeat:5,level:84,fee:0,
+  rules:['Trottatori di 3 anni (anche femmine nell\'Open), sul miglio al Meadowlands.','Si resta iscritti pagando le rate: nomination da yearling (25 $), mantenimento a 2 anni (500 $), mantenimento a 3 anni (2.000 $) ed entrata a 3 anni (15.000 $, 16.250 $ per una femmina nell\'Open) entro il 15 febbraio. Una rata saltata esclude il cavallo.','Niente iscrizioni supplementari per l\'Open.','Da 14 a 20 iscritti: due eliminatorie, i primi cinque di ognuna in finale. Montepremi stimato 1,2 milioni di dollari.','Nel gioco: entro la settimana 7 paghi mantenimento ed entrata (17.000 $ in totale) per un cavallo di 3 anni; le rate da puledro si considerano pagate se il cavallo è tuo da 2 anni.'],
+  src:[['Hambletonian Society · Conditions','https://www.hambletonian.com/s/25-hambo.pdf']]}
+];
+BIG.forEach(r=>{if(r.ref){const b=BIG.find(x=>x.id===r.ref); r.rules=b.rules; r.src=b.src;}});
+
+const SILK_COLORS=['#d32f2f','#1565c0','#2e7d32','#f9a825','#6a1b9a','#ef6c00','#00838f','#111111','#ffffff','#c2185b','#5d4037','#9e9d24','#0d47a1','#b71c1c','#e0e0e0','#ffd54f'];
+const PATTERNS=[['plain','Tinta unita'],['band','Fascia'],['stripes','Strisce'],['cross','Croce'],['hoops','Cerchi'],['dots','Pois'],['star','Stella'],['diamond','Rombi']];
+
+const FIRST=['Marco','Luca','Gianni','Paolo','Roberto','Enrico','Alessandro','Stefano','Andrea','Pietro','Federico','Simone','Claudio','Matteo','Vincenzo','Antonio','Giuseppe','Lorenzo','Davide','Nicola','Sara','Giulia','Elena','Francesca'];
+const LAST=['Bellandi','Ferretti','Gambini','Lupetti','Marchesi','Orlandini','Paganelli','Righetti','Santarelli','Tosoni','Vannucci','Zanetti','Baldacci','Cerretani','Donnini','Fabbri','Galletti','Mazzoni','Neri','Pellegrini','Ricci','Sartori','Tamburini','Venturi'];
+const HN1=['Zefiro','Brezza','Lampo','Tuono','Vento','Stella','Fulmine','Gioia','Orgoglio','Sogno','Ombra','Saetta','Diamante','Corsaro','Baleno','Luna','Re','Principe','Regina','Aurora','Ardito','Falco','Mistral','Bora'];
+const HN2=['del Lago','di Sesana','Bigi','Gar','Jet','Dipa','Op','Wise','Grif','Font','Ok','Lux','As','Bi','Mag','Sm','Cup','d\'Asti','di Toscana','del Nord','Express','Star','One','Rex'];
+
+/* ===== Simulazione della corsa (usata sia dalla visuale 3D sia dal risultato rapido) ===== */
+const LAP=1000, STRAIGHT=250, RAD=(LAP-2*STRAIGHT)/(2*Math.PI), FINISH_S=200, LANE_W=1.6;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function kmFmt(sec){ if(!isFinite(sec)) return '—'; const m=Math.floor(sec/60), s=sec-m*60; return `${m}'${s.toFixed(1).padStart(4,'0').replace('.','"')}`; }
+function trackPos(s,off){ // s lungo la corda (0..LAP), off = scostamento verso l'esterno in metri
+  s=((s%LAP)+LAP)%LAP; const r=RAD+off, cl=Math.PI*RAD;
+  if(s<STRAIGHT) return {x:-STRAIGHT/2+s, z:-r, curve:false};
+  s-=STRAIGHT;
+  if(s<cl){const a=-Math.PI/2+s/RAD; return {x:STRAIGHT/2+r*Math.cos(a), z:r*Math.sin(a), curve:true};}
+  s-=cl;
+  if(s<STRAIGHT) return {x:STRAIGHT/2-s, z:r, curve:false};
+  s-=STRAIGHT; const a=Math.PI/2+s/RAD; return {x:-STRAIGHT/2+r*Math.cos(a), z:r*Math.sin(a), curve:true};
+}
+const isCurve=s=>{s=((s%LAP)+LAP)%LAP; return (s>=STRAIGHT&&s<STRAIGHT+Math.PI*RAD)||(s>=2*STRAIGHT+Math.PI*RAD);};
+
+class RaceSim{
+  constructor(field,dist,startType){
+    this.dist=dist; this.start=startType; this.t=0; this.done=false; this.go=startType==='nastri'; this.pre=startType==='auto'?5:2;
+    this.h=field.map((f,i)=>{
+      const km=79-f.rating*.11, vc=1000/km;
+      const row=startType==='auto'?(i<8?0:1):0, gate=startType==='auto'?(i<8?i:i-8+.5):i%8;
+      return Object.assign({},f,{i,km,vc,vmax:vc*1.065,x:startType==='auto'?-row*7:-(f.hcp||0),lat:gate*LANE_W,lane:Math.round(gate),
+        v:startType==='auto'?vc*.8:0,E:100,brk:0,breaks:0,dq:false,fin:null,noise:rnd(-.004,.004),
+        tac:f.tac||['avanti','coperto','finale'][Math.floor(Math.random()*3)],push:false,save:false,want:0,phase:0});
+    });
+    this.order=this.h.slice();
+  }
+  gateX(){ return this.go?null:(this.h.reduce((a,b)=>Math.max(a,b.x),-99)+2); }
+  step(dt){
+    if(this.done) return;
+    if(!this.go){ // fase di avvicinamento dietro la macchina dell'autostart
+      this.pre-=dt; const vs=this.start==='auto'?Math.min(...this.h.map(h=>h.vc))*.82:0;
+      this.h.forEach(h=>{ if(this.start==='auto'){h.v=vs; h.x+=vs*dt;} });
+      if(this.pre<=0){ this.go=true; const off=-Math.max(...this.h.map(h=>h.x)); this.h.forEach(h=>h.x+=off); }
+      return;
+    }
+    this.t+=dt; const D=this.dist;
+    const sorted=this.h.filter(h=>h.fin==null&&!h.dq).sort((a,b)=>b.x-a.x);
+    for(const h of this.h){
+      if(h.fin!=null) { h.x+=h.v*dt; h.v=Math.max(0,h.v-2*dt); continue; }
+      if(h.dq){ h.v=Math.max(h.vc*.6,h.v-1.5*dt); h.x+=h.v*dt; h.lat+=Math.min(.6*dt,Math.max(0,(4*LANE_W)-h.lat)); continue; }
+      const p=h.x/D, togo=D-h.x;
+      let tgt=h.vc*(1+h.noise);
+      if(p<.15) tgt*=1+(h.stt-50)/900+(h.tac==='avanti'?.012:0);
+      else if(togo>(h.tac==='finale'?650:520)) tgt*= h.tac==='avanti'?1.0:h.tac==='coperto'?.996:.99;
+      else tgt=Math.min(h.vmax, h.vc*(.962+.19*(h.E/100))+(h.tac==='finale'?.12:0));
+      // il gruppo segue il ritmo del battistrada: chi è più debole lo paga in energia
+      if(p>=.15&&togo>520&&sorted.length){ const L=sorted[0]; if(L!==h) tgt=Math.max(tgt,Math.min(h.vmax,L.v*(h.tac==='finale'?.992:.998))); }
+      if(h.E<18) tgt*=.88+h.E/150;
+      // partenza: chi è all'esterno o spinge per andare in testa o si ritira per mettersi in coda alla fila interna
+      if(p<.22&&h.lane>0){ const blk=sorted.some(o=>o!==h&&Math.abs(o.x-h.x)<4.2&&Math.abs(o.lat-(h.lane-1)*LANE_W)<1.2);
+        if(blk) tgt*= h.tac==='avanti'?1.03:.965; }
+      if(h.push) tgt*=1.035; if(h.save) tgt*=.97;
+      if(this.start==='nastri'&&h.x<60) tgt=Math.min(tgt,h.v+2.6*dt*30);
+      // traffico: chi è davanti nella stessa corsia
+      const ahead=sorted.filter(o=>o!==h&&o.x>h.x&&o.x-h.x<3.2&&Math.abs(o.lat-h.lat)<1.1)[0];
+      const covered=sorted.some(o=>o!==h&&o.x>h.x&&o.x-h.x<6&&Math.abs(o.lat-h.lat)<1.1);
+      const freeLane=(lat)=>!sorted.some(o=>o!==h&&Math.abs(o.x-h.x)<4.2&&Math.abs(o.lat-lat)<1.2);
+      if(ahead&&tgt>ahead.v*1.002){
+        const wantOut = h.isMe&&h.want ? h.want>0 : (togo<650||(h.tac==='avanti'&&p>.25)||Math.random()<.003);
+        if(wantOut&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; if(h.isMe) h.want=0;}
+        else tgt=Math.min(tgt,ahead.v);
+      }
+      if(h.isMe&&h.want>0&&h.lane<4&&freeLane((h.lane+1)*LANE_W)){h.lane++; h.want=0;}
+      const pref=(p<.18||togo<650)?0:(h.tac==='coperto'?1:0);
+      if(h.lane>0&&freeLane((h.lane-1)*LANE_W)){
+        const wantIn = h.isMe&&h.want ? h.want<0 : (h.lane>pref&&(p<.3||!ahead&&togo>450));
+        if(wantIn&&(h.isMe&&h.want||Math.random()<.35)){h.lane--; if(h.isMe) h.want=0;}
+      }
+      if(h.isMe&&h.want<0&&h.lane===0) h.want=0;
+      h.lat+=clamp(h.lane*LANE_W-h.lat,-1.1*dt,1.1*dt);
+      // rottura (galoppo)
+      if(h.brk>0){ h.brk-=dt; tgt=h.vc*.72; }
+      else {
+        let hz=.00028*(1+(100-h.reg)/22)*(h.push?5:1)*(p<.08?2.4:1)*(h.drv<60?1.3:1)*(1+(100-(h.tmp||60))/150);
+        if(Math.random()<hz*dt){ h.brk=2.6; h.breaks++; if(h.lane<4) h.lane++;
+          if(h.breaks>=2||togo<150) h.dq=true; }
+      }
+      const acc=tgt>h.v?(this.start==='nastri'&&h.x<80?2.6:1.2):2.2;
+      h.v+=clamp(tgt-h.v,-acc*dt,acc*dt);
+      // energia
+      let drain=Math.pow(h.v/h.vc,3)*(86/(D/h.vc))*(1.25-h.sta/200)*(h.lat>.8&&!covered?1+.12*h.lane:covered?.78:1.14)*(h.push?1.7:1)*(h.save?.7:1);
+      h.E=Math.max(0,h.E-drain*dt);
+      let dx=h.v*dt; const s=this.trackS(h.x); if(isCurve(s)) dx*=RAD/(RAD+h.lat);
+      h.x+=dx;
+      if(h.x>=D&&h.fin==null){ h.fin=this.t; }
+    }
+    this.order=this.h.slice().sort((a,b)=>{
+      if(a.dq!==b.dq) return a.dq?1:-1;
+      if(a.fin!=null&&b.fin!=null) return a.fin-b.fin;
+      if(a.fin!=null) return -1; if(b.fin!=null) return 1;
+      return b.x-a.x;});
+    if(this.h.every(h=>h.fin!=null||h.dq)) this.done=true;
+  }
+  trackS(x){ return FINISH_S-this.dist+x; }
+  result(){
+    const fin=this.order.filter(h=>!h.dq), dq=this.order.filter(h=>h.dq);
+    const w=fin[0];
+    return {rows:[...fin.map((h,k)=>({pos:k+1,h,time:h.fin,km:h.fin/((this.dist+(h.hcp||0))/1000),gap:k?((h.fin-w.fin)*h.vc):0})),...dq.map(h=>({pos:null,h,dq:true}))]};
+  }
+  runToEnd(){ let g=0; while(!this.done&&g<200000){ this.step(.05); g++; } return this.result(); }
+}
+
+/* ===== Stato di gioco ===== */
+const SAVE='trotto-save-v1';
+let G=null, tab='home', ui={};
+const $=s=>document.querySelector(s);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const eur=n=>(n<0?'−':'')+'€ '+Math.round(Math.abs(n)).toLocaleString('it-IT');
+function save(){try{localStorage.setItem(SAVE,JSON.stringify(G))}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(SAVE)||'null')}catch(e){return null}}
+function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function news(m){G.news.unshift(`S${G.week}·${G.year}: ${m}`);G.news=G.news.slice(0,30)}
+
+/* ===== Giubba (colori sociali) ===== */
+function silkSVG(c,size=44){
+  const a=c.a,b=c.b,p=c.pattern; let deco='';
+  if(p==='band') deco=`<path d="M14 18 L50 54 L58 46 L22 10Z" fill="${b}"/>`;
+  else if(p==='stripes') deco=[20,28,36,44,52].map(x=>`<rect x="${x}" y="12" width="4" height="46" fill="${b}"/>`).join('');
+  else if(p==='cross') deco=`<rect x="32" y="12" width="8" height="46" fill="${b}"/><rect x="14" y="26" width="44" height="8" fill="${b}"/>`;
+  else if(p==='hoops') deco=[22,34,46].map(y=>`<rect x="12" y="${y}" width="48" height="5" fill="${b}"/>`).join('');
+  else if(p==='dots') deco=[[24,24],[40,22],[30,36],[46,38],[24,48],[42,52]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.4" fill="${b}"/>`).join('');
+  else if(p==='star') deco=`<path d="M36 22 l4 9 10 1 -8 6 3 10 -9-6 -9 6 3-10 -8-6 10-1z" fill="${b}"/>`;
+  else if(p==='diamond') deco=`<path d="M36 18 L46 34 L36 50 L26 34Z" fill="${b}"/>`;
+  return `<svg class="silk" width="${size}" height="${size}" viewBox="0 0 72 72" role="img" aria-label="Colori sociali"><defs><clipPath id="cj${size}${p}"><path d="M20 12 L52 12 L66 24 L60 34 L56 30 L56 60 L16 60 L16 30 L12 34 L6 24Z"/></clipPath></defs>
+  <path d="M20 12 L52 12 L66 24 L60 34 L56 30 L56 60 L16 60 L16 30 L12 34 L6 24Z" fill="${a}" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>
+  <g clip-path="url(#cj${size}${p})">${deco}</g>
+  <path d="M28 12 Q36 20 44 12" fill="none" stroke="${b}" stroke-width="3"/></svg>`;
+}
+
+/* ===== Cavalli ===== */
+function randName(){return pick(HN1)+' '+pick(HN2)}
+function newHorse(age,q){ // q = qualità 0..1
+  const base=age<=2?32:age===3?44:age===4?52:58, span=age<=2?14:20;
+  const pot=Math.round(clamp(55+q*40+rnd(-6,6),50,99));
+  const st=()=>Math.round(clamp(base+q*span+rnd(-6,6),20,pot));
+  return {id:uid(),name:randName(),sex:pick(['M','M','F','C']),age,native:Math.random()<.8,spd:st(),sta:st(),stt:st(),reg:Math.round(clamp(55+q*30+rnd(-10,10),35,98)),
+    tmp:Math.round(rnd(40,90)),pot,form:50,fat:10,inj:0,earn:age<=2?0:Math.round(Math.pow(q,2)*age*15000*rnd(.5,1.5)),starts:age<=2?0:Math.round(age*6*rnd(.6,1.2)),wins:0,best:null,
+    plan:'medio',hambo:false,since:age,raced:false,coat:pick(['#5b3a1e','#3b2414','#1c120b','#7a4a26','#2b2b2b','#8b5a2b'])};
+}
+const avg=h=>(h.spd+h.sta+h.stt+h.reg)/4;
+function rating(h,dist,drv){
+  const wS=dist>2400?.36:dist>1900?.44:.52, wT=.8-wS-.0;
+  let r=h.spd*wS+h.sta*(wT-.2)+h.stt*.12+h.reg*.08+ (h.spd+h.sta)/2*.2;
+  r+= (h.form-50)*.1 - Math.max(0,h.fat-30)*.08 + ((drv?drv.skill:55)-60)*.06 + (G.trainer?(G.trainer.skill-60)*.03:-.6);
+  return Math.round(r*10)/10;
+}
+const sexN={M:'Maschio',F:'Femmina',C:'Castrone'};
+function price(h){return Math.round((3000+Math.pow(Math.max(0,avg(h)-35),2)*55*(h.age<=3?1.3:h.age>=9?.5:1)+(h.pot-60)*400)/500)*500}
+
+/* ===== Staff ===== */
+function person(){return pick(FIRST)+' '+pick(LAST)}
+function newTrainer(q){const skill=Math.round(50+q*42+rnd(-4,4));return {id:uid(),name:person(),skill,spec:pick(['velocità','fondo','puledri','partenze']),salary:Math.round((300+Math.pow(skill-45,2)*1.6)/10)*10}}
+function newDriver(q){const skill=Math.round(52+q*42+rnd(-4,4));return {id:uid(),name:person(),skill,style:pick(['aggressivo','attendista','tattico']),retainer:Math.round((80+Math.pow(skill-45,2)*.9)/10)*10,fee:skill>85?400:skill>75?250:150}}
+const FREELANCE={id:'free',name:'Driver di giornata',skill:58,style:'tattico',fee:120};
+
+/* ===== Strutture ===== */
+const FAC={
+  box:{n:'Box e scuderie',d:'Più cavalli in allenamento: 4, 8, 12, 16.',cost:[0,25000,50000,90000],max:3},
+  pista:{n:'Pista di allenamento',d:'Ogni livello aumenta i progressi in allenamento dell\'8%.',cost:[0,30000,60000,110000],max:3},
+  piscina:{n:'Piscina per cavalli',d:'Recupero più rapido della fatica.',cost:[0,20000,45000,80000],max:3},
+  tapis:{n:'Tapis roulant',d:'Migliora il fondo (resistenza) dei cavalli.',cost:[0,18000,40000,70000],max:3},
+  vet:{n:'Clinica veterinaria',d:'Meno infortuni e rientri più rapidi.',cost:[0,25000,55000,100000],max:3}
+};
+const capacity=()=>[4,8,12,16][G.fac.box];
+const upkeep=()=>Object.values(G.fac).reduce((a,l)=>a+l*120,0);
+
+/* ===== Nuova partita ===== */
+function newGame(st){
+  G={v:1,year:2027,week:1,money:180000,stable:st,horses:[],trainer:newTrainer(.25),drivers:[],fac:{box:0,pista:0,piscina:0,tapis:0,vet:0},
+     entries:[],runs:[],market:{},news:[],ep:{},qual:{amerique:[],elit:[]},history:[]};
+  [[2,.45],[3,.4],[5,.35]].forEach(([a,q],i)=>{const h=newHorse(a,q); h.name=st.names[i]||randName(); h.earn=a===2?0:h.earn; G.horses.push(h)});
+  refreshMarket(); news(`Nasce la scuderia ${st.name}. Allenatore: ${G.trainer.name}.`);
+  save();
+}
+function refreshMarket(){
+  G.market={week:G.week,horses:Array.from({length:6},()=>{const a=pick([2,2,3,3,4,5,6,7]);const h=newHorse(a,Math.pow(Math.random(),.8)); h.price=price(h); return h}),
+    trainers:Array.from({length:3},()=>newTrainer(Math.random())),drivers:Array.from({length:4},()=>newDriver(Math.random()))};
+}
+
+/* ===== Corse della settimana ===== */
+function seeded(seed){let x=seed%2147483647; if(x<=0)x+=2147483646; return ()=>(x=x*16807%2147483647)/2147483647;}
+function nationalRaces(week,year){
+  const r=seeded(year*1000+week*7+3), out=[], pickR=a=>a[Math.floor(r()*a.length)];
+  const tracks=[...NAT_TRACKS].sort(()=>r()-.5).slice(0,3);
+  const types=[];
+  if(week>=26) types.push({n:'Premio per 2 anni',age:[2,2],maxEarn:10000,dists:[1600],purse:6600,level:46});
+  types.push({n:'Condizionata 3 anni',age:[3,3],maxEarn:15000,dists:[1600,2060],purse:8800,level:50},
+    {n:'Condizionata 3 anni',age:[3,3],maxEarn:50000,dists:[2060,2100],purse:12100,level:58},
+    {n:'Condizionata anziani',age:[4,99],maxEarn:30000,dists:[1600,2060],purse:7700,level:52},
+    {n:'Condizionata anziani',age:[4,99],maxEarn:90000,dists:[1600,2100],purse:11000,level:60},
+    {n:'Handicap ai nastri',age:[4,99],maxEarn:null,dists:[2060,2080],purse:9900,level:57,nastri:true},
+    {n:'Condizionata anziani',age:[4,99],maxEarn:250000,dists:[1600,2100],purse:16500,level:68});
+  if(week%4===2) types.push({n:'Gran Premio (Gruppo III)',age:[4,99],maxEarn:null,dists:[1600,2100],purse:44000,level:76,group:'Gruppo III'});
+  if(week%4===0) types.push({n:'Premio di Gruppo III per 3 anni',age:[3,3],maxEarn:null,dists:[2100],purse:33000,level:66,group:'Gruppo III'});
+  tracks.forEach((t,ti)=>{ types.filter(()=>r()<.55).slice(0,3).forEach((ty,k)=>{
+    const d=pickR(ty.dists);
+    out.push({id:`n${year}-${week}-${ti}-${k}`,n:`${ty.n} · Premio ${pickR(['Arno','Etruria','Vesuvio','Superga','Brenta','Tevere','Romagna','Lagune','Madonnina','Colli','Versilia','Maremma'])}`,
+      week,track:t,dist:d,start:ty.nastri?'nastri':'auto',purse:ty.purse,group:ty.group||(ty.maxEarn?`Somme vinte < ${eur(ty.maxEarn)}`:'Aperta'),
+      age:ty.age,maxEarn:ty.maxEarn,format:'single',level:ty.level,fee:0,nat:true,nastri:!!ty.nastri});
+  });});
+  return out;
+}
+function racesOf(week,year){ return [...BIG.filter(b=>b.week===week),...nationalRaces(week,year)]; }
+function raceById(id){ const big=BIG.find(b=>b.id===id); if(big) return big; const [, y, w]=id.match(/^n(\d+)-(\d+)-/)||[]; return nationalRaces(+w,+y).find(r=>r.id===id); }
+function hcpFor(race,h){ if(!race.nastri) return 0; return h.earn>150000?40:h.earn>60000?20:0; }
+
+function eligible(race,h){
+  const why=[];
+  if(h.inj>0) why.push(`infortunato (${h.inj} sett.)`);
+  if(h.age<race.age[0]||h.age>race.age[1]) why.push(race.age[0]===race.age[1]?`solo ${race.age[0]} anni`:`età ${race.age[0]}${race.age[1]<99?'–'+race.age[1]:'+'} anni`);
+  if(race.maxEarn&&h.earn>=race.maxEarn) why.push(`somme vinte oltre ${eur(race.maxEarn)}`);
+  if(race.minEarn&&h.earn<race.minEarn&&!(race.needQual==='amerique'&&G.qual.amerique.includes(h.id))) why.push(`servono ${eur(race.minEarn)} di somme vinte`);
+  if(race.native&&!h.native) why.push('solo cavalli nati in Italia');
+  if(race.noGelding&&h.sex==='C') why.push('castroni esclusi');
+  if(race.needQual==='amerique'&&!G.qual.amerique.includes(h.id)&&h.earn<300000) why.push('serve un piazzamento nei primi 3 di una prova 4B (o oltre 300.000 € di somme vinte)');
+  if(race.needQual==='elit'&&!G.qual.elit.includes(h.id)&&!(rating(h,1609)>=88||h.earn>=500000)) why.push('serve il biglietto rosa: classifica E-race o invito di Solvalla');
+  if(race.needPay==='hambo'&&!h.hambo) why.push('rate Hambletonian non pagate');
+  if(G.entries.some(e=>e.horse===h.id&&e.week===G.week&&e.race!==race.id)) why.push('già iscritto a un\'altra corsa questa settimana');
+  if(race.week===G.week&&race.week<=G.week&&G.runs.length&&!G.entries.some(e=>e.race===race.id&&e.horse===h.id)) why.push('giornata di corse già iniziata');
+  return why;
+}
+
+/* ===== Settimana ===== */
+const PLANS=[['riposo','Riposo'],['leggero','Leggero'],['medio','Medio'],['intenso','Intenso'],['velocita','Velocità'],['fondo','Fondo'],['partenze','Partenze']];
+function train(h){
+  if(h.inj>0){ h.inj=Math.max(0,h.inj-1-(G.fac.vet>=2?1:0)); h.fat=Math.max(0,h.fat-20); h.form=Math.max(20,h.form-2); return; }
+  const tr=G.trainer||{skill:45,spec:''};
+  const mul=(tr.skill/70)*(1+.08*G.fac.pista)*(h.age<=3?1.3:h.age<=6?1:h.age<=8?.6:.3);
+  const room=k=>clamp((h.pot-h[k])/25,0,1.2);
+  const g=(k,x)=>{h[k]=Math.min(h.pot,Math.round((h[k]+x*mul*room(k)*rnd(.6,1.4))*10)/10)};
+  const P={riposo:[-28,0],leggero:[-12,.35],medio:[4,.8],intenso:[15,1.4],velocita:[10,1.1],fondo:[10,1.1],partenze:[6,.9]}[h.plan]||[0,.5];
+  h.fat=clamp(h.fat+P[0]-G.fac.piscina*4,0,100);
+  const x=P[1];
+  if(h.plan==='velocita') g('spd',x*1.6+(tr.spec==='velocità'?.3:0));
+  else if(h.plan==='fondo') g('sta',x*1.6+G.fac.tapis*.15+(tr.spec==='fondo'?.3:0));
+  else if(h.plan==='partenze'){g('stt',x*1.4+(tr.spec==='partenze'?.3:0)); g('reg',x*1.0);}
+  else if(x>0){g('spd',x*.7);g('sta',x*.7+G.fac.tapis*.08);g('stt',x*.4);g('reg',x*.35);}
+  if(tr.spec==='puledri'&&h.age<=3) g('spd',.2);
+  const tgt=50+(tr.skill-60)*.6-h.fat*.35+(h.plan==='riposo'?-3:0);
+  h.form=clamp(Math.round(h.form+(tgt-h.form)*.3+rnd(-3,3)),10,100);
+  if(h.fat>75&&['intenso','velocita','fondo'].includes(h.plan)&&Math.random()<.1*(1-.25*G.fac.vet)){
+    h.inj=Math.round(rnd(2,6)); news(`${h.name} si è infortunato in allenamento: fermo ${h.inj} settimane.`);}
+}
+function endWeek(){
+  G.horses.forEach(train);
+  const cost=G.horses.length*350+(G.trainer?G.trainer.salary:0)+G.drivers.reduce((a,d)=>a+d.retainer,0)+upkeep();
+  G.money-=cost; news(`Spese della settimana: ${eur(cost)} (cavalli, staff, strutture).`);
+  if(G.week===21){ G.horses.forEach(h=>{ if((G.ep[h.id]||0)>=21&&!G.qual.elit.includes(h.id)){G.qual.elit.push(h.id); news(`${h.name} riceve il biglietto rosa per l'Elitloppet!`);} }); }
+  if(G.week===5) G.qual.amerique=[];
+  G.entries=G.entries.filter(e=>e.week!==G.week); G.runs=[];
+  G.week++;
+  if(G.week>52){ G.week=1; G.year++; G.ep={}; G.qual.elit=[];
+    G.horses.forEach(h=>{h.age++;}); const old=G.horses.filter(h=>h.age>12); old.forEach(h=>news(`${h.name} va in pensione dopo ${h.starts} corse.`));
+    G.horses=G.horses.filter(h=>h.age<=12); news(`Inizia la stagione ${G.year}: tutti i cavalli compiono un anno.`);}
+  if(G.week-(G.market.week||0)>=4||G.week<(G.market.week||0)) refreshMarket();
+  if(G.money<-50000) news('Attenzione: la cassa è molto in rosso. Vendi un cavallo o riduci lo staff.');
+  save();
+}
+
+/* ===== Giornata di corse ===== */
+const PRIZE=[.5,.2,.12,.08,.05,.03,.02];
+function aiField(n,level,dist,race){
+  return Array.from({length:n},()=>{const c={a:pick(SILK_COLORS),b:pick(SILK_COLORS),pattern:pick(PATTERNS)[0]};
+    const rt=level+rnd(-6,6);
+    return {name:randName(),rating:rt,sta:clamp(rt+rnd(-10,10),30,99),stt:clamp(rt+rnd(-12,12),30,99),reg:clamp(70+rnd(-15,20),35,98),tmp:rnd(40,90),drv:rnd(60,85),
+      colors:c,coat:pick(['#5b3a1e','#3b2414','#1c120b','#7a4a26','#2b2b2b']),hcp:race&&race.nastri?pick([0,0,0,20,20,40]):0};});
+}
+function myRunner(e,race){
+  const h=G.horses.find(x=>x.id===e.horse), d=e.driver==='free'?FREELANCE:G.drivers.find(x=>x.id===e.driver)||FREELANCE;
+  return {name:h.name,rating:rating(h,race.dist,d),sta:h.sta,stt:h.stt,reg:h.reg,tmp:h.tmp,drv:d.skill,colors:G.stable.colors,coat:h.coat,isMe:true,hid:h.id,tac:e.tac||'coperto',hcp:hcpFor(race,h)};
+}
+function prepareRuns(){
+  G.runs=G.entries.filter(e=>e.week===G.week).map(e=>{const race=raceById(e.race);
+    return {entry:e,race,stage:race.format==='heats'?'heat':'final',done:false,res:null,log:[]};});
+  save();
+}
+function buildField(run){
+  const race=run.race, me=myRunner(run.entry,race);
+  let n=race.format==='heats'?(run.stage==='heat'?Math.min(10,race.heats*race.qualPerHeat+2):race.heats*race.qualPerHeat+(race.extra||0)):(race.nat?Math.floor(rnd(8,12)):Math.floor(rnd(10,14)));
+  if(race.id==='elitloppet') n=run.stage==='heat'?8:8;
+  const lvl=race.level+(run.stage==='final'&&race.format==='heats'?2:0);
+  const f=aiField(n-1,lvl,race.dist,race); const pos=Math.floor(Math.random()*n); f.splice(pos,0,me); return f;
+}
+function settle(run,result){
+  const race=run.race, h=G.horses.find(x=>x.id===run.entry.horse); const row=result.rows.find(r=>r.h.isMe);
+  const pos=row.pos; h.raced=true;
+  if(run.stage==='heat'){
+    const q=pos&&pos<=race.qualPerHeat || (race.extra&&pos===race.qualPerHeat+1&&Math.random()<.6);
+    h.fat=clamp(h.fat+12,0,100); h.starts++;
+    run.log.push(`Batteria: ${pos?pos+'°':'squalificato'}${row.km?` in ${kmFmt(row.km)}`:''}.`);
+    if(q){ run.stage='final'; run.log.push('Qualificato per la finale!'); news(`${h.name} si qualifica per la finale del ${race.n}.`);}
+    else { run.done=true; run.res={pos,km:row.km}; news(`${h.name} eliminato in batteria nel ${race.n}.`);}
+    save(); return;
+  }
+  const prize=pos&&pos<=PRIZE.length?race.purse*PRIZE[pos-1]:0;
+  const drv=run.entry.driver==='free'?FREELANCE:(G.drivers.find(d=>d.id===run.entry.driver)||FREELANCE);
+  const net=prize*.85-drv.fee; G.money+=net-(race.fee||0)*0;
+  h.earn+=prize; h.starts+=race.format==='heats'?0:1; if(race.format==='heats') h.starts++;
+  if(pos===1) h.wins++;
+  if(row.km&&(!h.best||row.km<h.best)) h.best=row.km;
+  h.fat=clamp(h.fat+22,0,100); h.form=clamp(h.form+(pos&&pos<=3?4:-2),10,100);
+  run.done=true; run.res={pos,km:row.km,prize};
+  run.log.push(`${pos?pos+'°':'Squalificato (rottura)'}${row.km?` · ${kmFmt(row.km)}/km`:''}${prize?` · premio ${eur(prize)} (netto ${eur(net)} dopo allenatore 10%, driver 5% e compenso)`:''}`);
+  news(`${h.name}: ${pos?pos+'°':'squalificato'} nel ${race.n}${prize?` (${eur(prize)})`:''}.`);
+  if(race.qualifies==='amerique'&&pos&&pos<=3&&!G.qual.amerique.includes(h.id)){G.qual.amerique.push(h.id); news(`${h.name} è qualificato per il Prix d'Amérique!`);}
+  if(race.epoints&&pos&&pos<=6){const pts=[15,8,6,3,2,1][pos-1]; G.ep[h.id]=(G.ep[h.id]||0)+pts; news(`${h.name} guadagna ${pts} punti E-race (totale ${G.ep[h.id]}).`);}
+  G.history.unshift({y:G.year,w:G.week,race:race.n,horse:h.name,pos,km:row.km,prize}); G.history=G.history.slice(0,60);
+  save();
+}
+
+/* ===== Interfaccia ===== */
+const ICONS={
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  horses:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20l2-6-3-3 4-6 5 2 4-2 2 3-3 2 1 4-3 6M9 14h5"/></svg>',
+  races:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 21V4M5 4h11l-2 3 2 3H5"/></svg>',
+  staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.8 3.4-6 6.5-6s5.7 2.2 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.6.2 4.6 2.2 5.2 5.3"/></svg>',
+  fac:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V10l9-6 9 6v11M9 21v-6h6v6"/></svg>'
+};
+const TABS=[['home','Scuderia'],['horses','Cavalli'],['races','Gare'],['staff','Staff'],['fac','Strutture']];
+let raceWeekView=null;
+
+function render(){
+  const app=$('#app');
+  if(!G){ app.innerHTML=setupHTML(); bindSetup(); return; }
+  app.innerHTML=`<div class="app">
+    <header class="top">${silkSVG(G.stable.colors,40)}<div class="who"><b>${esc(G.stable.name)}</b><small>Settimana ${G.week} · stagione ${G.year}</small></div>
+    <div class="cash">${eur(G.money)}<small>in cassa</small></div></header>
+    <main id="main">${({home:homeHTML,horses:horsesHTML,races:racesHTML,staff:staffHTML,fac:facHTML})[tab]()}</main>
+    <nav class="tabs" aria-label="Sezioni"><div class="in">${TABS.map(([k,n])=>`<button data-tab="${k}" ${k===tab?'aria-current="page"':''}>${ICONS[k]}<span>${n}</span></button>`).join('')}</div></nav></div>`;
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();window.scrollTo(0,0)});
+  bindAll();
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Setup ---------- */
+let setup={name:'',owner:'',colors:{a:'#1565c0',b:'#f9a825',pattern:'band'},names:['','','']};
+function setupHTML(){
+  return `<div class="app"><main>
+  <div class="card"><h2>Fonda la tua scuderia</h2><p class="muted small" style="margin:0">Scegli nome e colori sociali, poi dai il nome ai tuoi primi tre trottatori: un puledro di 2 anni, un 3 anni e un anziano di 5 anni.</p></div>
+  <div class="card">
+    <label class="f">Nome della scuderia<input type="text" id="sName" maxlength="32" placeholder="es. Scuderia Sesana" value="${esc(setup.name)}"></label>
+    <label class="f">Proprietario<input type="text" id="sOwner" maxlength="32" placeholder="Il tuo nome" value="${esc(setup.owner)}"></label>
+  </div>
+  <div class="card"><h3>Colori sociali</h3>
+    <div class="hero"><div id="silkPrev">${silkSVG(setup.colors,96)}</div>
+    <div style="display:grid;gap:10px"><div><div class="small muted">Colore principale</div><div class="colors" data-col="a">${SILK_COLORS.map(c=>`<button style="background:${c}" data-c="${c}" aria-label="Colore ${c}" aria-pressed="${setup.colors.a===c}"></button>`).join('')}</div></div>
+    <div><div class="small muted">Secondo colore</div><div class="colors" data-col="b">${SILK_COLORS.map(c=>`<button style="background:${c}" data-c="${c}" aria-label="Colore ${c}" aria-pressed="${setup.colors.b===c}"></button>`).join('')}</div></div></div></div>
+    <div class="seg" id="pat">${PATTERNS.map(([k,n])=>`<button data-p="${k}" aria-pressed="${setup.colors.pattern===k}">${n}</button>`).join('')}</div>
+  </div>
+  <div class="card"><h3>I tuoi cavalli</h3>
+    ${['Puledro di 2 anni','Cavallo di 3 anni','Anziano di 5 anni'].map((l,i)=>`<label class="f">${l}<div class="row"><input type="text" class="grow" data-hn="${i}" maxlength="20" placeholder="Nome del cavallo" value="${esc(setup.names[i])}"><button class="btn ghost small" data-sugg="${i}">Suggerisci</button></div></label>`).join('')}
+  </div>
+  <button class="btn" id="found">Fonda la scuderia</button>
+  </main></div>`;
+}
+function bindSetup(){
+  $('#sName').oninput=e=>setup.name=e.target.value; $('#sOwner').oninput=e=>setup.owner=e.target.value;
+  document.querySelectorAll('[data-col]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.colors[g.dataset.col]=b.dataset.c;render()}));
+  document.querySelectorAll('#pat button').forEach(b=>b.onclick=()=>{setup.colors.pattern=b.dataset.p;render()});
+  document.querySelectorAll('[data-hn]').forEach(i=>i.oninput=()=>setup.names[+i.dataset.hn]=i.value);
+  document.querySelectorAll('[data-sugg]').forEach(b=>b.onclick=()=>{setup.names[+b.dataset.sugg]=randName();render()});
+  $('#found').onclick=()=>{ if(!setup.name.trim()){toast('Dai un nome alla scuderia.');$('#sName').focus();return}
+    newGame({name:setup.name.trim(),owner:setup.owner.trim(),colors:setup.colors,names:setup.names.map(n=>n.trim())}); tab='home'; render(); };
+}
+
+/* ---------- Home ---------- */
+function upcomingBig(n){
+  const out=[]; for(let k=0;k<52&&out.length<n;k++){const w=((G.week-1+k)%52)+1; BIG.filter(b=>b.week===w).forEach(b=>out.push([b,k]));} return out.slice(0,n);
+}
+function homeHTML(){
+  const wk=G.entries.filter(e=>e.week===G.week);
+  return `<div class="card"><div class="hero">${silkSVG(G.stable.colors,96)}<div><h2>${esc(G.stable.name)}</h2><div class="muted small">${G.stable.owner?'Proprietario: '+esc(G.stable.owner)+' · ':''}${G.horses.length}/${capacity()} cavalli</div>
+    <div class="kv" style="margin-top:8px"><div><small>Vittorie</small><b>${G.horses.reduce((a,h)=>a+h.wins,0)}</b></div><div><small>Somme vinte</small><b>${eur(G.horses.reduce((a,h)=>a+h.earn,0))}</b></div></div></div></div></div>
+  <div class="card"><div class="row"><div class="grow"><h3>Settimana ${G.week}</h3><div class="muted small">${wk.length?`${wk.length} iscrizion${wk.length>1?'i':'e'} in programma`:'Nessuna corsa in programma: puoi iscrivere i cavalli nella sezione Gare.'}</div></div>
+    <button class="btn" data-go="races">${wk.length?'Vai alle corse':'Gare'}</button></div></div>
+  <div class="card"><h3>Prossime grandi corse</h3>${upcomingBig(5).map(([b,k])=>`<div class="row"><span class="pill g1">${k===0?'questa sett.':'tra '+k+' sett.'}</span><div class="grow"><b>${b.n}</b><div class="muted small">${TRACKS[b.track].n} · ${b.dist} m · ${b.age[0]===b.age[1]?b.age[0]+' anni':b.age[0]+' anni e oltre'}</div></div></div>`).join('')}</div>
+  <div class="card"><h3>Notizie</h3><div class="news">${G.news.slice(0,10).map(n=>`<div>${esc(n)}</div>`).join('')}</div></div>
+  <div class="card"><details><summary>Opzioni partita</summary><div class="row" style="margin-top:10px"><button class="btn ghost small" id="reset">Ricomincia da capo</button></div></details></div>`;
+}
+
+/* ---------- Cavalli ---------- */
+function statRow(n,v,pot){return `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${v}%"></i></div><b>${Math.round(v)}</b></div>`}
+function horseCard(h,mine=true){
+  const r=rating(h,2100), canHambo=mine&&h.age===3&&G.week<=7&&!h.hambo;
+  return `<div class="card"><div class="horse"><div class="ico">${h.age}a</div><div>
+    <div class="row"><h3>${esc(h.name)}</h3>${h.inj?`<span class="pill no">infortunato ${h.inj} sett.</span>`:''}${G.qual.amerique.includes(h.id)?'<span class="pill g1">qualif. Amérique</span>':''}${G.qual.elit.includes(h.id)?'<span class="pill g1">biglietto rosa</span>':''}${h.hambo?'<span class="pill ok">Hambletonian</span>':''}</div>
+    <div class="muted small">${sexN[h.sex]} · ${h.native?'nato in Italia':'importato'} · valutazione ${r} · ${h.starts} corse, ${h.wins} vittorie · ${eur(h.earn)}${h.best?` · record ${kmFmt(h.best)}`:''}</div></div>
+    <div class="muted small" style="text-align:right">potenziale<br><b style="color:var(--ink)">${h.pot}</b></div></div>
+    ${statRow('Velocità',h.spd)}${statRow('Fondo',h.sta)}${statRow('Partenza',h.stt)}${statRow('Regolarità',h.reg)}
+    <div class="kv"><div><small>Forma</small><b>${h.form}</b></div><div><small>Fatica</small><b style="color:${h.fat>70?'var(--bad)':h.fat>45?'var(--warn)':'var(--good)'}">${Math.round(h.fat)}</b></div><div><small>Carattere</small><b>${h.tmp>70?'calmo':h.tmp>50?'normale':'nervoso'}</b></div></div>
+    ${mine?`<div><div class="small muted" style="margin-bottom:6px">Allenamento della settimana</div><div class="seg" data-plan="${h.id}">${PLANS.map(([k,n])=>`<button data-v="${k}" aria-pressed="${h.plan===k}">${n}</button>`).join('')}</div></div>
+    <div class="row">${!h.raced?`<button class="btn ghost small" data-rename="${h.id}">Cambia nome</button>`:''}${canHambo?`<button class="btn ghost small" data-hambo="${h.id}">Paga rate Hambletonian (€ 15.700)</button>`:''}<button class="btn ghost small" data-sell="${h.id}">Vendi (${eur(price(h)*.8)})</button></div>`
+    :`<div class="row"><b class="grow">${eur(h.price)}</b><button class="btn small" data-buy="${h.id}">Compra</button></div>`}
+  </div>`;
+}
+function horsesHTML(){
+  return `<div class="row"><h2 class="grow">I tuoi cavalli</h2><span class="muted small">${G.horses.length}/${capacity()} box</span></div>
+  ${G.horses.map(h=>horseCard(h)).join('')||'<div class="card muted">Nessun cavallo: comprane uno qui sotto.</div>'}
+  <div class="card"><b>Come funziona l'allenamento</b><div class="muted small">Ogni settimana il piano scelto migliora le doti fino al potenziale e aumenta o riduce la fatica. Oltre 75 di fatica con lavori intensi il rischio d'infortunio sale. Più l'allenatore è bravo e migliori sono le strutture, più i progressi sono rapidi. I giovani migliorano più in fretta.</div></div>
+  <h2>Mercato cavalli</h2><p class="muted small" style="margin:0">Si rinnova ogni 4 settimane.</p>
+  ${G.market.horses.map(h=>horseCard(h,false)).join('')}`;
+}
+
+/* ---------- Staff ---------- */
+function staffHTML(){
+  const t=G.trainer;
+  return `<h2>Allenatore</h2>
+  <div class="card">${t?`<div class="row"><div class="grow"><h3>${esc(t.name)}</h3><div class="muted small">Abilità ${t.skill} · specialità ${t.spec} · stipendio ${eur(t.salary)}/sett. · 10% dei premi</div></div></div>`:'<div class="muted">Nessun allenatore: i cavalli migliorano poco.</div>'}</div>
+  <div class="card"><b>Allenatori disponibili</b>${G.market.trainers.map(x=>`<div class="row"><div class="grow"><b>${esc(x.name)}</b><div class="muted small">Abilità ${x.skill} · ${x.spec} · ${eur(x.salary)}/sett.</div></div><button class="btn small" data-hiret="${x.id}">Ingaggia (${eur(x.salary*4)})</button></div>`).join('')}</div>
+  <h2>Driver</h2>
+  <div class="card"><div class="muted small">Il driver guida il sulky in corsa: più è bravo, meno rotture e scelte tattiche migliori. Ogni corsa paga un compenso fisso più il 5% del premio. Puoi tenere fino a 3 driver sotto contratto oppure usare il driver di giornata (abilità ${FREELANCE.skill}).</div>
+  ${G.drivers.map(d=>`<div class="row"><div class="grow"><b>${esc(d.name)}</b><div class="muted small">Abilità ${d.skill} · stile ${d.style} · ${eur(d.retainer)}/sett. + ${eur(d.fee)} a corsa</div></div><button class="btn ghost small" data-fire="${d.id}">Libera</button></div>`).join('')||'<div class="muted small">Nessun driver sotto contratto.</div>'}</div>
+  <div class="card"><b>Driver disponibili</b>${G.market.drivers.map(x=>`<div class="row"><div class="grow"><b>${esc(x.name)}</b><div class="muted small">Abilità ${x.skill} · ${x.style} · ${eur(x.retainer)}/sett. + ${eur(x.fee)} a corsa</div></div><button class="btn small" data-hired="${x.id}" ${G.drivers.length>=3?'disabled':''}>Ingaggia (${eur(x.retainer*4)})</button></div>`).join('')}</div>`;
+}
+
+/* ---------- Strutture ---------- */
+function facHTML(){
+  return `<h2>Centro di allenamento</h2><p class="muted small" style="margin:0">Manutenzione: ${eur(upkeep())} a settimana.</p>
+  ${Object.entries(FAC).map(([k,f])=>{const l=G.fac[k], nx=f.cost[l+1];
+    return `<div class="card"><div class="row"><div class="grow"><h3>${f.n}</h3><div class="muted small">${f.d}</div></div><span class="pill">${l?'livello '+l:'assente'}</span></div>
+    <div class="bar"><i style="width:${l/3*100}%"></i></div>
+    ${l<f.max?`<button class="btn small" data-up="${k}">Migliora a livello ${l+1} (${eur(nx)})</button>`:'<span class="muted small">Livello massimo</span>'}</div>`}).join('')}`;
+}
+
+/* ---------- Gare ---------- */
+function raceCard(race){
+  const entered=G.entries.filter(e=>e.race===race.id);
+  const big=!race.nat;
+  const opts=G.horses.map(h=>({h,why:eligible(race,h)}));
+  const ok=opts.filter(o=>!o.why.length&&!entered.some(e=>e.horse===o.h.id));
+  const isNow=race.week===G.week&&!G.runs.length;
+  return `<div class="card race ${big?'big':''}">
+    <div class="row"><div class="grow"><h3>${race.n}</h3><div class="muted small">${TRACKS[race.track].n} · ${race.dist} m · ${race.start==='auto'?'partenza autostart':'partenza ai nastri'} · ${race.age[0]===race.age[1]?race.age[0]+' anni':race.age[0]+(race.age[1]<99?'–'+race.age[1]:'')+' anni'+(race.age[1]>=99?' e oltre':'')}</div></div>
+    <div style="text-align:right"><span class="pill ${big?'g1':''}">${race.group}</span><div class="small" style="margin-top:4px"><b>${eur(race.purse)}</b></div></div></div>
+    ${big?`<details><summary>Regole di ammissione e fonti</summary><div class="rules" style="margin-top:6px">${race.rules.map(r=>`<div>• ${r}</div>`).join('')}<div>Fonti: ${race.src.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(' · ')}</div></div></details>`:''}
+    ${entered.map(e=>{const h=G.horses.find(x=>x.id===e.horse);return h?`<div class="row small"><span class="pill ok">iscritto</span><b class="grow">${esc(h.name)}</b><span class="muted">${e.driver==='free'?'driver di giornata':esc((G.drivers.find(d=>d.id===e.driver)||{}).name||'')}</span>${isNow?`<button class="btn ghost small" data-unent="${race.id}|${h.id}">Ritira</button>`:''}</div>`:''}).join('')}
+    ${isNow&&G.horses.length?(ok.length?`<div class="row"><select data-eh="${race.id}" aria-label="Cavallo da iscrivere">${ok.map(o=>`<option value="${o.h.id}">${esc(o.h.name)} (val. ${rating(o.h,race.dist)})</option>`).join('')}</select>
+      <select data-ed="${race.id}" aria-label="Driver"><option value="free">Driver di giornata (${FREELANCE.skill})</option>${G.drivers.map(d=>`<option value="${d.id}">${esc(d.name)} (${d.skill})</option>`).join('')}</select>
+      <select data-et="${race.id}" aria-label="Tattica"><option value="coperto">Tattica: corsa coperta</option><option value="avanti">Tattica: in testa</option><option value="finale">Tattica: rimonta finale</option></select>
+      <button class="btn small" data-enter="${race.id}">Iscrivi${race.fee?` (${eur(race.fee)})`:''}</button></div>`
+      :`<div class="muted small">${opts.length?'Nessuno dei tuoi cavalli è ammesso: '+[...new Set(opts.flatMap(o=>o.why))].slice(0,3).join('; ')+'.':''}</div>`)
+     :(!isNow&&race.week!==G.week?`<div class="muted small">Iscrizioni aperte nella settimana ${race.week}.</div>`:'')}
+  </div>`;
+}
+function racesHTML(){
+  const w=raceWeekView||G.week, y=w<G.week?G.year+1:G.year;
+  const list=racesOf(w,y);
+  const runs=G.runs, myEntries=G.entries.filter(e=>e.week===G.week);
+  let day='';
+  if(w===G.week){
+    if(!runs.length) day=`<div class="card"><div class="row"><div class="grow"><h3>Giornata di corse</h3><div class="muted small">${myEntries.length?`${myEntries.length} cavall${myEntries.length>1?'i':'o'} iscritt${myEntries.length>1?'i':'o'}. Quando sei pronto, si corre.`:'Nessun iscritto questa settimana.'}</div></div>
+      ${myEntries.length?'<button class="btn" id="startDay">Si corre!</button>':'<button class="btn ghost" id="endWeek">Chiudi la settimana</button>'}</div></div>`;
+    else day=`<div class="card"><h3>Giornata di corse</h3>${runs.map((r,i)=>{const h=G.horses.find(x=>x.id===r.entry.horse);return `<div class="card" style="background:var(--panel2)"><div class="row"><div class="grow"><b>${r.race.n}</b><div class="muted small">${h?esc(h.name):''} · ${r.stage==='heat'?'batteria':'finale'} · ${r.race.dist} m</div></div></div>
+      ${r.log.map(l=>`<div class="small">${l}</div>`).join('')}
+      ${!r.done?`<div class="row"><button class="btn small" data-watch="${i}">Guarda dal sulky</button><button class="btn ghost small" data-quick="${i}">Risultato rapido</button></div>`:''}</div>`}).join('')}
+      ${runs.every(r=>r.done)?'<button class="btn" id="endWeek">Chiudi la settimana</button>':''}</div>`;
+  }
+  return `<div class="row"><h2 class="grow">Gare</h2>
+    <button class="btn ghost small" data-wk="-1" ${w<=G.week?'disabled':''} aria-label="Settimana precedente">‹</button><b>Sett. ${w}</b><button class="btn ghost small" data-wk="1" ${w>=G.week+8?'disabled':''} aria-label="Settimana successiva">›</button></div>
+  ${day}
+  ${w>G.week?'<p class="muted small" style="margin:0">Anteprima: le iscrizioni si aprono nella settimana della corsa.</p>':''}
+  ${list.sort((a,b)=>(a.nat?1:0)-(b.nat?1:0)).map(raceCard).join('')}
+  <div class="card"><h3>Calendario grandi corse</h3><div class="tblwrap"><table class="res"><tr><th>Sett.</th><th>Corsa</th><th>Ippodromo</th></tr>${BIG.slice().sort((a,b)=>a.week-b.week).map(b=>`<tr><td>${b.week}</td><td>${b.n}</td><td>${TRACKS[b.track].n}</td></tr>`).join('')}</table></div>
+  <p class="muted small" style="margin:6px 0 0">Le settimane seguono il calendario reale; montepremi e quote d'iscrizione segnati "nel gioco" sono indicativi.</p></div>`;
+}
+
+/* ---------- Azioni ---------- */
+function bindAll(){
+  const on=(sel,fn)=>document.querySelectorAll(sel).forEach(el=>el.onclick=()=>fn(el));
+  on('[data-go]',b=>{tab=b.dataset.go;render()});
+  on('#reset',()=>{ if(ui.confirmReset){localStorage.removeItem(SAVE);G=null;ui.confirmReset=false;render();} else {ui.confirmReset=true;toast('Tocca di nuovo per cancellare la partita.');}});
+  document.querySelectorAll('[data-plan]').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{G.horses.find(h=>h.id===g.dataset.plan).plan=b.dataset.v;save();render()}));
+  on('[data-rename]',b=>{const h=G.horses.find(x=>x.id===b.dataset.rename); ui.renaming=h.id; const card=b.closest('.card'); const row=document.createElement('div'); row.className='row';
+    row.innerHTML=`<input type="text" class="grow" id="rn" maxlength="20" value="${esc(h.name)}" aria-label="Nuovo nome"><button class="btn small" id="rnok">Salva</button>`; card.appendChild(row); $('#rn').focus();
+    $('#rnok').onclick=()=>{const v=$('#rn').value.trim(); if(v){h.name=v;save();render();}}});
+  on('[data-sell]',b=>{const h=G.horses.find(x=>x.id===b.dataset.sell); if(ui.confirmSell!==h.id){ui.confirmSell=h.id;toast(`Tocca di nuovo per vendere ${h.name}.`);return}
+    G.money+=price(h)*.8; G.horses=G.horses.filter(x=>x!==h); G.entries=G.entries.filter(e=>e.horse!==h.id); news(`Venduto ${h.name} per ${eur(price(h)*.8)}.`); save(); render();});
+  on('[data-buy]',b=>{const h=G.market.horses.find(x=>x.id===b.dataset.buy); if(G.horses.length>=capacity()){toast('Box pieni: migliora le scuderie nelle Strutture.');return}
+    if(G.money<h.price){toast('Non hai abbastanza soldi.');return} G.money-=h.price; h.since=h.age; delete h.price; G.horses.push(h); G.market.horses=G.market.horses.filter(x=>x!==h); news(`Acquistato ${h.name}.`); save(); render();});
+  on('[data-hambo]',b=>{const h=G.horses.find(x=>x.id===b.dataset.hambo); if(h.since>2){toast('Non idoneo: le rate da puledro non risultano pagate (cavallo acquistato dopo i 2 anni).');return}
+    if(G.money<15700){toast('Non hai abbastanza soldi.');return} G.money-=15700; h.hambo=true; news(`Pagate le rate Hambletonian per ${h.name}.`); save(); render();});
+  on('[data-hiret]',b=>{const t=G.market.trainers.find(x=>x.id===b.dataset.hiret); if(G.money<t.salary*4){toast('Non hai abbastanza soldi.');return}
+    G.money-=t.salary*4; G.trainer=t; G.market.trainers=G.market.trainers.filter(x=>x!==t); news(`Nuovo allenatore: ${t.name}.`); save(); render();});
+  on('[data-hired]',b=>{const d=G.market.drivers.find(x=>x.id===b.dataset.hired); if(G.money<d.retainer*4){toast('Non hai abbastanza soldi.');return}
+    G.money-=d.retainer*4; G.drivers.push(d); G.market.drivers=G.market.drivers.filter(x=>x!==d); news(`Ingaggiato il driver ${d.name}.`); save(); render();});
+  on('[data-fire]',b=>{G.drivers=G.drivers.filter(d=>d.id!==b.dataset.fire); G.entries.forEach(e=>{if(e.driver===b.dataset.fire)e.driver='free'}); save(); render();});
+  on('[data-up]',b=>{const k=b.dataset.up, c=FAC[k].cost[G.fac[k]+1]; if(G.money<c){toast('Non hai abbastanza soldi.');return} G.money-=c; G.fac[k]++; news(`${FAC[k].n} al livello ${G.fac[k]}.`); save(); render();});
+  on('[data-wk]',b=>{raceWeekView=clamp((raceWeekView||G.week)+(+b.dataset.wk),G.week,G.week+8); if(raceWeekView>52) raceWeekView=52; render();});
+  on('[data-enter]',b=>{const id=b.dataset.enter, race=raceById(id); const hid=$(`[data-eh="${id}"]`).value, dr=$(`[data-ed="${id}"]`).value, tac=$(`[data-et="${id}"]`).value;
+    if(race.fee&&G.money<race.fee){toast('Non hai abbastanza soldi per l\'iscrizione.');return} G.money-=race.fee||0;
+    G.entries.push({race:id,horse:hid,driver:dr,tac,week:G.week}); const h=G.horses.find(x=>x.id===hid); toast(`${h.name} iscritto: ${race.n}.`); save(); render();});
+  on('[data-unent]',b=>{const [rid,hid]=b.dataset.unent.split('|'); G.entries=G.entries.filter(e=>!(e.race===rid&&e.horse===hid)); save(); render();});
+  on('#startDay',()=>{prepareRuns(); render();});
+  on('#endWeek',()=>{endWeek(); raceWeekView=null; tab='home'; render(); toast(`Inizia la settimana ${G.week}.`);});
+  on('[data-quick]',b=>{const run=G.runs[+b.dataset.quick]; const sim=new RaceSim(buildField(run),run.race.dist,run.race.start); const res=sim.runToEnd(); settle(run,res); showResult(run,res);});
+  on('[data-watch]',b=>{const run=G.runs[+b.dataset.watch]; const sim=new RaceSim(buildField(run),run.race.dist,run.race.start);
+    watchRace(sim,run,res=>{settle(run,res); showResult(run,res);});});
+}
+function showResult(run,res){
+  render();
+  const box=document.createElement('div'); box.className='card'; box.style.cssText='position:fixed;left:12px;right:12px;top:calc(70px + env(safe-area-inset-top,0px));z-index:25;max-height:75vh;overflow:auto;max-width:720px;margin:0 auto';
+  box.innerHTML=`<div class="row"><h3 class="grow">${run.race.n}${run.stage==='final'&&run.race.format==='heats'&&!run.done?' · batteria':''}</h3><button class="btn small" id="closeRes">Chiudi</button></div>
+  <div class="tblwrap"><table class="res"><tr><th>Pos.</th><th>Cavallo</th><th>Tempo al km</th></tr>${res.rows.map(r=>`<tr class="${r.h.isMe?'me':''}"><td>${r.pos||'Sq.'}</td><td>${esc(r.h.name)}${r.h.hcp?` <span class="muted">(+${r.h.hcp} m)</span>`:''}</td><td>${r.dq?'rottura':kmFmt(r.km)}</td></tr>`).join('')}</table></div>`;
+  document.body.appendChild(box); $('#closeRes').onclick=()=>box.remove();
+}
+
+/* ===== Visuale 3D della corsa: telecamera sul casco del driver (stile GoPro) o ripresa TV ===== */
+function canvasTex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);
+  if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep[0],rep[1]);} t.anisotropy=4; return t;}
+function noiseFill(g,w,h,base,vari,n){g.fillStyle=base;g.fillRect(0,0,w,h);for(let i=0;i<n;i++){const v=(Math.random()-.5)*vari;g.fillStyle=`rgba(${v>0?255:0},${v>0?240:0},${v>0?200:0},${Math.abs(v)})`;g.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*2,1+Math.random()*2);}}
+
+function makeRig(colors,coat,num,me){
+  const R=new THREE.Group(), H=new THREE.Group(); R.add(H);
+  const M=c=>new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.05});
+  const coatM=M(coat), darkM=M('#151515'), silkA=M(colors.a), silkB=M(colors.b);
+  const mesh=(g,m,x,y,z,rx=0,ry=0,rz=0)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o;};
+  // corpo del cavallo (rivolto verso +z)
+  const body=mesh(new THREE.SphereGeometry(.5,20,14),coatM,0,1.38,.15); body.scale.set(.86,.95,2.05); H.add(body);
+  H.add(mesh(new THREE.CylinderGeometry(.2,.3,1.0,12),coatM,0,1.78,1.05,.75));
+  const head=new THREE.Group(); head.position.set(0,2.12,1.45); H.add(head);
+  head.add(mesh(new THREE.BoxGeometry(.24,.27,.62),coatM,0,-.05,.22,.55));
+  head.add(mesh(new THREE.ConeGeometry(.05,.17,6),coatM,-.08,.14,-.02));
+  head.add(mesh(new THREE.ConeGeometry(.05,.17,6),coatM,.08,.14,-.02));
+  head.add(mesh(new THREE.BoxGeometry(.3,.06,.06),darkM,0,.02,.08)); // paraocchi
+  H.add(mesh(new THREE.BoxGeometry(.1,.55,.25),darkM,0,1.96,.65,.2)); // criniera
+  const tail=mesh(new THREE.CylinderGeometry(.04,.09,.8,8),darkM,0,1.15,-.95,-.35); H.add(tail);
+  // sottopancia e numero
+  const pad=canvasTex(128,96,(g)=>{g.fillStyle='#f4f4f4';g.fillRect(0,0,128,96);g.fillStyle='#111';g.font='bold 64px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(num,64,52);});
+  const sm=new THREE.MeshStandardMaterial({map:pad,roughness:.9});
+  H.add(mesh(new THREE.BoxGeometry(.98,.5,.6),sm,0,1.45,.35));
+  // zampe: coppie diagonali per il trotto
+  const legs=[];
+  [[-.2,1.18,.7,0],[.2,1.18,.7,1],[-.2,1.22,-.5,1],[.2,1.22,-.5,0]].forEach(([x,y,z,pair])=>{
+    const up=new THREE.Group(); up.position.set(x,y,z); H.add(up);
+    up.add(mesh(new THREE.CylinderGeometry(.08,.06,.6,8),coatM,0,-.3,0));
+    const lo=new THREE.Group(); lo.position.set(0,-.6,0); up.add(lo);
+    lo.add(mesh(new THREE.CylinderGeometry(.05,.045,.52,8),coatM,0,-.26,0));
+    lo.add(mesh(new THREE.CylinderGeometry(.065,.07,.1,8),darkM,0,-.55,0));
+    legs.push({up,lo,pair,front:z>0});
+  });
+  // sulky
+  const steel=new THREE.MeshStandardMaterial({color:'#c9ced6',metalness:.7,roughness:.35});
+  const shaft=(sx)=>{const a=new THREE.Vector3(sx*.42,1.3,.75), b=new THREE.Vector3(sx*.62,.72,-1.55), d=b.clone().sub(a);
+    const c=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,d.length(),6),steel); c.position.copy(a.clone().add(b).multiplyScalar(.5));
+    c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize()); R.add(c);};
+  shaft(-1); shaft(1);
+  const wheels=[];
+  [-.78,.78].forEach(x=>{const w=new THREE.Group(); w.position.set(x,.62,-1.75); w.rotation.y=Math.PI/2; R.add(w);
+    w.add(new THREE.Mesh(new THREE.TorusGeometry(.6,.035,8,32),M('#222')));
+    for(let k=0;k<6;k++){const sp=new THREE.Mesh(new THREE.BoxGeometry(.015,1.18,.015),steel); sp.rotation.z=k*Math.PI/6; w.add(sp);} wheels.push(w);});
+  R.add(mesh(new THREE.BoxGeometry(1.5,.05,.05),steel,0,.62,-1.75));
+  R.add(mesh(new THREE.BoxGeometry(.5,.08,.4),M('#333'),0,.86,-1.9));
+  // driver
+  const drv=new THREE.Group(); R.add(drv);
+  drv.add(mesh(new THREE.BoxGeometry(.46,.62,.3),silkA,0,1.22,-1.95,-.25));
+  drv.add(mesh(new THREE.BoxGeometry(.48,.12,.31),silkB,0,1.3,-1.96,-.25));
+  const helmet=mesh(new THREE.SphereGeometry(.15,16,12),silkB,0,1.68,-1.88); drv.add(helmet);
+  const legM=M('#e8e8e8'); drv.add(mesh(new THREE.BoxGeometry(.13,.13,.75),legM,-.22,.95,-1.45,.35)); drv.add(mesh(new THREE.BoxGeometry(.13,.13,.75),legM,.22,.95,-1.45,.35));
+  const arms=[];
+  [-1,1].forEach(sx=>{const a=mesh(new THREE.BoxGeometry(.1,.1,.55),silkA,sx*.22,1.38,-1.62,.45); drv.add(a); arms.push(a);
+    drv.add(mesh(new THREE.SphereGeometry(.06,8,6),M('#222'),sx*.18,1.25,-1.38));});
+  // redini
+  const reins=[];
+  [-1,1].forEach(sx=>{const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(sx*.18,1.25,-1.38),new THREE.Vector3(sx*.16,1.75,.6),new THREE.Vector3(sx*.12,2.0,1.55)]);
+    const l=new THREE.Line(g,new THREE.LineBasicMaterial({color:'#2b1a0e'})); R.add(l); reins.push(l);});
+  if(me){ helmet.visible=false; drv.children[0].visible=false; drv.children[1].visible=false; }
+  // ombra finta
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshBasicMaterial({color:'#000',transparent:true,opacity:.28,depthWrite:false}));
+  sh.rotation.x=-Math.PI/2; sh.scale.set(.9,2.4,1); sh.position.set(0,.02,-.5); R.add(sh);
+  return {root:R,horse:H,legs,wheels,head,tail,phase:Math.random()*6};
+}
+
+function animateRig(rig,v,dt){
+  const f=v/5.4; rig.phase+=dt*f*Math.PI*2;
+  const p=rig.phase;
+  rig.legs.forEach(l=>{const s=Math.sin(p+(l.pair?Math.PI:0));
+    l.up.rotation.x=(l.front?.55:.45)*s; l.lo.rotation.x=l.front?Math.max(0,-s)*1.1:-Math.max(0,s)*.9;});
+  rig.horse.position.y=Math.abs(Math.sin(p))*.05;
+  rig.head.rotation.x=Math.sin(p*2)*.04; rig.tail.rotation.z=Math.sin(p*.7)*.15;
+  rig.wheels.forEach(w=>w.rotation.x-=v*dt/.6);
+}
+
+function buildWorld(scene){
+  scene.background=new THREE.Color('#9fc3e6'); scene.fog=new THREE.Fog('#b9d2ea',140,820);
+  scene.add(new THREE.HemisphereLight('#dfefff','#4b6b35',.95));
+  const sun=new THREE.DirectionalLight('#fff4dc',1.05); sun.position.set(-200,300,-150); scene.add(sun);
+  const grass=canvasTex(256,256,(g,w,h)=>noiseFill(g,w,h,'#3f8a46',.25,9000),[120,120]);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),new THREE.MeshStandardMaterial({map:grass,roughness:1}));
+  ground.rotation.x=-Math.PI/2; ground.position.y=-.02; scene.add(ground);
+  // pista in sabbia
+  const sand=canvasTex(256,512,(g,w,h)=>{noiseFill(g,w,h,'#c99d62',.35,26000); for(let i=0;i<70;i++){g.strokeStyle=`rgba(90,60,30,${Math.random()*.18})`;g.lineWidth=1+Math.random()*2;const x=Math.random()*w;g.beginPath();g.moveTo(x,0);g.lineTo(x+(Math.random()-.5)*8,h);g.stroke();}},null);
+  sand.wrapS=sand.wrapT=THREE.RepeatWrapping;
+  const N=500, IN=-2.2, OUT=21, pos=[], uv=[], idx=[];
+  for(let i=0;i<=N;i++){const s=i/N*LAP; const a=trackPos(s,IN), b=trackPos(s,OUT);
+    pos.push(a.x,0,a.z,b.x,0,b.z); uv.push(0,s/12,3,s/12);
+    if(i<N){const k=i*2; idx.push(k,k+1,k+2,k+1,k+3,k+2);}}
+  const tg=new THREE.BufferGeometry(); tg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); tg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); tg.setIndex(idx); tg.computeVertexNormals();
+  const track=new THREE.Mesh(tg,new THREE.MeshStandardMaterial({map:sand,roughness:.95,side:THREE.DoubleSide})); track.position.y=.01; scene.add(track);
+  // steccato interno ed esterno
+  const rail=(off,h,col)=>{const n=400, d=new THREE.Object3D();
+    const bars=new THREE.InstancedMesh(new THREE.BoxGeometry(.09,.09,1),new THREE.MeshStandardMaterial({color:col,roughness:.5}),n);
+    const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(.08,h,.08),new THREE.MeshStandardMaterial({color:col,roughness:.5}),n);
+    for(let i=0;i<n;i++){const s=i/n*LAP, a=trackPos(s,off), b=trackPos(s+LAP/n,off);
+      d.position.set((a.x+b.x)/2,h,(a.z+b.z)/2); d.lookAt(b.x,h,b.z); d.scale.set(1,1,Math.hypot(b.x-a.x,b.z-a.z)); d.updateMatrix(); bars.setMatrixAt(i,d.matrix);
+      d.position.set(a.x,h/2,a.z); d.rotation.set(0,0,0); d.scale.set(1,1,1); d.updateMatrix(); posts.setMatrixAt(i,d.matrix);}
+    scene.add(bars); scene.add(posts);};
+  rail(-2.4,1.0,'#f5f5f5'); rail(21.4,1.2,'#e9e9e9');
+  // tribuna sul rettilineo d'arrivo
+  const crowd=canvasTex(512,128,(g,w,h)=>{g.fillStyle='#3a3f4a';g.fillRect(0,0,w,h);for(let i=0;i<5000;i++){g.fillStyle=`hsl(${Math.random()*360},${30+Math.random()*40}%,${35+Math.random()*40}%)`;g.fillRect(Math.random()*w,Math.random()*h,2,3);}});
+  const stand=new THREE.Mesh(new THREE.BoxGeometry(220,16,20),[M2('#59606e'),M2('#59606e'),M2('#4a505c'),M2('#4a505c'),new THREE.MeshStandardMaterial({map:crowd}),M2('#59606e')]);
+  stand.position.set(0,8,-(RAD+21+22)); stand.rotation.y=Math.PI; scene.add(stand);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(226,1,26),M2('#d9dde3')); roof.position.set(0,17,-(RAD+21+20)); scene.add(roof);
+  // palo d'arrivo e linea
+  const fp=trackPos(FINISH_S,-3.2); const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,7,8),M2('#ffffff')); pole.position.set(fp.x,3.5,fp.z); scene.add(pole);
+  const disc=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,24),M2('#d32f2f')); disc.rotation.x=Math.PI/2; disc.position.set(fp.x,6.6,fp.z); scene.add(disc);
+  const a=trackPos(FINISH_S,-2.2), b=trackPos(FINISH_S,21); const line=new THREE.Mesh(new THREE.PlaneGeometry(.35,Math.hypot(b.x-a.x,b.z-a.z)),new THREE.MeshBasicMaterial({color:'#ffffff'}));
+  line.rotation.x=-Math.PI/2; line.position.set((a.x+b.x)/2,.03,(a.z+b.z)/2); scene.add(line);
+  // torri faro e alberi
+  for(let i=0;i<8;i++){const p=trackPos(i*LAP/8,34); const t=new THREE.Mesh(new THREE.CylinderGeometry(.35,.5,30,8),M2('#9aa1ab')); t.position.set(p.x,15,p.z); scene.add(t);
+    const lamp=new THREE.Mesh(new THREE.BoxGeometry(4,2,1),new THREE.MeshBasicMaterial({color:'#fffbe6'})); lamp.position.set(p.x,30,p.z); scene.add(lamp);}
+  const nT=160, trunk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.4,.5,4,6),M2('#5a3d22'),nT), crown=new THREE.InstancedMesh(new THREE.ConeGeometry(4,11,8),M2('#2f6a35'),nT), d=new THREE.Object3D();
+  for(let i=0;i<nT;i++){const ang=Math.random()*Math.PI*2, r=230+Math.random()*260; const x=Math.cos(ang)*r*1.4, z=Math.sin(ang)*r; const s=.8+Math.random()*.8;
+    d.position.set(x,2*s,z); d.scale.set(s,s,s); d.updateMatrix(); trunk.setMatrixAt(i,d.matrix); d.position.set(x,(4+5.5)*s,z); d.updateMatrix(); crown.setMatrixAt(i,d.matrix);}
+  scene.add(trunk); scene.add(crown);
+  // prato interno con laghetto
+  const lake=new THREE.Mesh(new THREE.CircleGeometry(40,40),new THREE.MeshStandardMaterial({color:'#4f7fa8',roughness:.2,metalness:.2})); lake.rotation.x=-Math.PI/2; lake.scale.set(2.2,1,1); lake.position.y=.02; scene.add(lake);
+}
+function M2(c){return new THREE.MeshStandardMaterial({color:c,roughness:.8});}
+function makeGateCar(){
+  const g=new THREE.Group(); const m=c=>new THREE.MeshStandardMaterial({color:c,roughness:.5,metalness:.3});
+  const car=new THREE.Mesh(new THREE.BoxGeometry(2,1.3,4.4),m('#e9e9e9')); car.position.y=.9; g.add(car);
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(1.8,.7,2),m('#22313f')); cab.position.set(0,1.85,-.2); g.add(cab);
+  [-1,1].forEach(sx=>{const w=new THREE.Mesh(new THREE.BoxGeometry(8.5,1.4,.12),m('#f2c14e')); w.position.set(sx*5.2,1.2,-2.3); g.add(w);
+    const st=new THREE.Mesh(new THREE.BoxGeometry(8.5,.25,.14),m('#1565c0')); st.position.set(sx*5.2,1.2,-2.32); g.add(st);});
+  return g;
+}
+
+let RV=null;
+function watchRace(sim,run,onDone){
+  if(!window.THREE){ toast('Visuale 3D non disponibile su questo dispositivo: mostro il risultato.'); onDone(sim.runToEnd()); return; }
+  const view=$('#raceView'); view.innerHTML=`<div class="hud"><div class="rec"><i></i>REC <span id="hClock">00:00</span></div>
+   <div class="meta"><span id="hPos">—</span><b id="hTogo">—</b><span id="hKm"></span></div><div class="order" id="hOrder"></div><div class="msg" id="hMsg"></div>
+   <div class="energy"><div>Energia</div><div class="bar"><i id="hE" style="width:100%"></i></div></div></div><div class="vignette"></div>
+   <div class="ctrl"><button id="cPush" class="push" aria-pressed="false">Spingi</button><button id="cSave" aria-pressed="false">Risparmia</button><button id="cOut">Esci ↗</button><button id="cIn">Rientra ↙</button>
+   <button id="cCam">Visuale</button><button id="cSpd">×1</button><button id="cSkip">Fine</button></div>`;
+  view.classList.add('on'); document.body.style.overflow='hidden';
+  let renderer;
+  try{ renderer=new THREE.WebGLRenderer({antialias:true}); }catch(e){ view.classList.remove('on'); document.body.style.overflow=''; toast('Visuale 3D non disponibile: mostro il risultato.'); onDone(sim.runToEnd()); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.outputEncoding=THREE.sRGBEncoding; view.prepend(renderer.domElement);
+  const scene=new THREE.Scene(); buildWorld(scene);
+  const cam=new THREE.PerspectiveCamera(80,window.innerWidth/window.innerHeight,.05,2000);
+  const fovFor=a=>clamp(2*Math.atan(Math.tan(54*Math.PI/180)/a)*180/Math.PI,62,112); cam.fov=fovFor(cam.aspect); cam.updateProjectionMatrix();
+  const rigs=sim.h.map((h,i)=>{const r=makeRig(h.colors,h.coat||'#5b3a1e',i+1,h.isMe); scene.add(r.root); return r;});
+  const meI=sim.h.findIndex(h=>h.isMe), me=sim.h[meI], myRig=rigs[meI];
+  myRig.root.add(cam); cam.position.set(0,2.32,-2.05); cam.rotation.set(-.26,Math.PI,0);
+  const gate=sim.start==='auto'?makeGateCar():null; if(gate) scene.add(gate);
+  let gateX=0, gateV=0, gateOff=0, speed=1, camMode='gopro', last=performance.now(), endT=null, hudT=0, raf;
+  const tvCam=new THREE.PerspectiveCamera(42,window.innerWidth/window.innerHeight,.1,3000);
+  const msg=t=>{$('#hMsg').textContent=t;};
+  msg(sim.start==='auto'?'Dietro la macchina…':'Pronti ai nastri…');
+  const onResize=()=>{renderer.setSize(window.innerWidth,window.innerHeight); cam.aspect=tvCam.aspect=window.innerWidth/window.innerHeight; cam.fov=fovFor(cam.aspect); cam.updateProjectionMatrix(); tvCam.updateProjectionMatrix();};
+  window.addEventListener('resize',onResize);
+  const tog=(id,k)=>{const b=$(id); b.onclick=()=>{me[k]=!me[k]; if(k==='push'&&me.push){me.save=false;$('#cSave').setAttribute('aria-pressed','false');} if(k==='save'&&me.save){me.push=false;$('#cPush').setAttribute('aria-pressed','false');} b.setAttribute('aria-pressed',me[k]);};};
+  tog('#cPush','push'); tog('#cSave','save');
+  $('#cOut').onclick=()=>{me.want=1}; $('#cIn').onclick=()=>{me.want=-1};
+  $('#cSpd').onclick=e=>{speed=speed===1?2:speed===2?4:1; e.target.textContent='×'+speed;};
+  $('#cCam').onclick=()=>{camMode=camMode==='gopro'?'tv':'gopro';};
+  $('#cSkip').onclick=()=>{sim.runToEnd(); finish();};
+  let finished=false;
+  function finish(){ if(finished) return; finished=true; cancelAnimationFrame(raf); window.removeEventListener('resize',onResize);
+    scene.traverse(o=>{if(o.geometry)o.geometry.dispose(); if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m.map)m.map.dispose(); m.dispose();});}});
+    renderer.dispose(); view.classList.remove('on'); view.innerHTML=''; document.body.style.overflow=''; onDone(sim.result()); }
+  let started=false;
+  function frame(now){
+    const dt=Math.min(.05,(now-last)/1000); last=now;
+    let rem=dt*speed; while(rem>0){const st=Math.min(.05,rem); sim.step(st); rem-=st;}
+    if(sim.go&&!started){started=true; msg('Via!'); setTimeout(()=>{if(!finished&&!sim.done) msg('')},1200);}
+    // macchina dell'autostart
+    if(gate){ if(!sim.go){gateX=Math.max(...sim.h.map(h=>h.x))+3.5; gateV=sim.h[0].v;} else {gateV+=7*dt*speed; gateX+=gateV*dt*speed; gateOff=Math.min(30,gateOff+6*dt*speed);}
+      const s=sim.trackS(gateX), p=trackPos(s,5.5+gateOff), q=trackPos(s+1,5.5+gateOff); gate.position.set(p.x,0,p.z); gate.lookAt(q.x,0,q.z); gate.visible=gateOff<29; }
+    sim.h.forEach((h,i)=>{const r=rigs[i], s=sim.trackS(h.x), p=trackPos(s,h.lat), q=trackPos(s+1.5,h.lat);
+      r.root.position.set(p.x,0,p.z); r.root.lookAt(q.x,0,q.z); animateRig(r,h.brk>0?h.v*1.25:h.v,dt*speed);
+      r.horse.rotation.x=h.brk>0?Math.sin(r.phase*2)*.12:0;});
+    // movimento della GoPro sul casco
+    const bob=Math.sin(myRig.phase*2)*.022+(Math.random()-.5)*.004*(me.v/14);
+    cam.position.y=2.32+bob; cam.rotation.z=Math.sin(myRig.phase)*.012+(me.lat-me.lane*LANE_W)*.02;
+    if(camMode==='tv'){const s=sim.trackS(me.x), p=trackPos(s+6,-28), t=trackPos(s,me.lat); tvCam.position.set(p.x,9,p.z); tvCam.lookAt(t.x,1.5,t.z);}
+    renderer.render(scene,camMode==='tv'?tvCam:cam);
+    hudT-=dt; if(hudT<=0){hudT=.2;
+      const ord=sim.order, mp=ord.indexOf(me)+1, togo=Math.max(0,Math.round(sim.dist-me.x));
+      $('#hClock').textContent=`${String(Math.floor(sim.t/60)).padStart(2,'0')}:${String(Math.floor(sim.t%60)).padStart(2,'0')}`;
+      $('#hPos').textContent=me.dq?'SQUALIFICATO':`${mp}° di ${ord.length}`;
+      $('#hTogo').textContent=me.fin!=null?'ARRIVATO':(sim.go?`${togo} m`:'—');
+      $('#hKm').textContent=sim.go&&me.x>100?`media ${kmFmt(sim.t/(me.x/1000))}/km · ${me.lane===0?'alla corda':me.lane+'ª ruota'}`:'';
+      $('#hE').style.width=me.E+'%'; $('#hE').style.background=me.E<25?'var(--bad)':me.E<50?'var(--warn)':'var(--good)';
+      const top=ord.slice(0,6); if(!top.includes(me)) top.push(me);
+      $('#hOrder').innerHTML=top.map(h=>`<div class="${h.isMe?'me':''}"><span class="c" style="background:${h.colors.a}"></span>${ord.indexOf(h)+1}. ${esc(h.name)}${h.brk>0?' ⚠':''}</div>`).join('');
+      if(me.brk>0&&!me.dq) msg('Rottura! Al galoppo'); else if(me.dq&&!endT) msg('Squalificato'); else if(started&&sim.go&&$('#hMsg').textContent.startsWith('Rottura')) msg('');
+    }
+    if((sim.done||me.fin!=null&&sim.h.filter(h=>h.fin!=null).length>=Math.min(3,sim.h.length))&&!endT){ endT=now; const p=sim.order.indexOf(me)+1; msg(me.dq?'Squalificato':`Arrivo: ${p}°`); }
+    if(endT&&now-endT>2600){ sim.runToEnd(); finish(); return; }
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(t=>{last=t;frame(t)});
+}
+
+G=load(); render();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body></html>
